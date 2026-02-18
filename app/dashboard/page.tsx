@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import BriefModal from '@/components/BriefModal';
 import { useToast } from '@/components/Toast';
+import OnboardingModal from '@/components/OnboardingModal';
 
 
 const SUGGESTED_KEYWORDS = [
@@ -33,6 +34,7 @@ export default function Dashboard() {
     const [selectedKeyword, setSelectedKeyword] = useState<KeywordResult | null>(null);
     const [mode, setMode] = useState<'web' | 'video' | 'competitor'>('web');
     const [showExportMenu, setShowExportMenu] = useState(false);
+    const [collapsedClusters, setCollapsedClusters] = useState<Set<string>>(new Set());
     const mounted = useMounted();
     const router = useRouter();
 
@@ -190,10 +192,21 @@ export default function Dashboard() {
         return groups;
     }, [results]);
 
+    const toggleCluster = (cluster: string) => {
+        setCollapsedClusters(prev => {
+            const next = new Set(prev);
+            if (next.has(cluster)) next.delete(cluster);
+            else next.add(cluster);
+            return next;
+        });
+    };
+
     if (!mounted) return null;
 
     return (
         <div className="min-h-screen pb-40 md:pb-32">
+            <OnboardingModal />
+
             <AnimatePresence mode="wait">
                 {selectedKeyword && (
                     <BriefModal
@@ -266,6 +279,39 @@ export default function Dashboard() {
             </motion.div>
 
             <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+                {/* Competitor DNA header card */}
+                {mode === 'competitor' && results.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 p-5 bg-primary/5 border border-primary/20 rounded-3xl flex flex-col sm:flex-row sm:items-center gap-4"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="size-12 bg-primary/15 rounded-2xl flex items-center justify-center shrink-0">
+                                <Shield className="text-primary size-6" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-0.5">Competitor Pulse Active</p>
+                                <p className="text-white font-black text-base tracking-tight">{query}</p>
+                            </div>
+                        </div>
+                        <div className="sm:ml-auto flex gap-4">
+                            <div className="text-center">
+                                <p className="text-xl font-black text-white">{results.length}</p>
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Keywords Found</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-xl font-black text-emerald-400">{results.filter(r => r.trendDirection === 'up').length}</p>
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Opportunities</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-xl font-black text-red-400">{results.filter(r => r.competitionScore > 70).length}</p>
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">High Threat</p>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
                 <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} className="hidden md:grid grid-cols-12 gap-4 px-8 py-4 border border-white/5 rounded-t-3xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
                     <div className="col-span-4 text-left">Keyword Insight</div>
                     <div className="col-span-2 text-center">Potential</div>
@@ -275,33 +321,70 @@ export default function Dashboard() {
                     <div className="col-span-2 text-right">Momentum</div>
                 </div>
 
-                <div className="space-y-8">
+                <div className="space-y-6">
                     {results.length > 0 ? (
-                        Object.entries(groupedResults).map(([cluster, clusterItems], clusterIdx) => (
-                            <motion.div
-                                key={cluster}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: clusterIdx * 0.1 }}
-                            >
-                                <div className="flex items-center gap-3 mb-4 px-4 overflow-hidden">
-                                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em] whitespace-nowrap">{cluster}</span>
-                                    <div className="h-px w-full bg-gradient-to-r from-primary/20 to-transparent"></div>
-                                </div>
-                                <div className="space-y-1 md:space-y-0 overflow-hidden rounded-3xl border border-white/5">
-                                    {clusterItems.map((item) => (
-                                        <KeywordRow
-                                            key={item.keyword}
-                                            data={item}
-                                            isSaved={savedKeywords.some(k => k.keyword === item.keyword)}
-                                            onSave={() => saveKeyword(item)}
-                                            onClick={() => setSelectedKeyword(item)}
-                                            mode={mode}
-                                        />
-                                    ))}
-                                </div>
-                            </motion.div>
-                        ))
+                        Object.entries(groupedResults).map(([cluster, clusterItems], clusterIdx) => {
+                            const isCollapsed = collapsedClusters.has(cluster);
+                            const avgDiff = Math.round(clusterItems.reduce((s, i) => s + i.competitionScore, 0) / clusterItems.length);
+                            const totalVol = clusterItems.reduce((s, i) => s + i.searchVolume, 0);
+                            return (
+                                <motion.div
+                                    key={cluster}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: clusterIdx * 0.08 }}
+                                >
+                                    {/* Cluster accordion header */}
+                                    <button
+                                        onClick={() => toggleCluster(cluster)}
+                                        className="w-full flex items-center gap-3 mb-3 px-4 group"
+                                    >
+                                        <motion.span
+                                            animate={{ rotate: isCollapsed ? -90 : 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="text-primary/60 group-hover:text-primary transition-colors shrink-0"
+                                        >
+                                            <ChevronRight size={14} />
+                                        </motion.span>
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em] whitespace-nowrap group-hover:text-primary/80 transition-colors">{cluster}</span>
+                                        <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent" />
+                                        <div className="flex items-center gap-3 shrink-0">
+                                            <span className="text-[9px] font-black text-slate-600">{clusterItems.length} kw</span>
+                                            <span className="text-[9px] font-black text-slate-600">{(totalVol / 1000).toFixed(0)}K vol</span>
+                                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${avgDiff > 70 ? 'bg-red-500/10 text-red-400' :
+                                                    avgDiff > 30 ? 'bg-amber-500/10 text-amber-400' :
+                                                        'bg-emerald-500/10 text-emerald-400'
+                                                }`}>avg {avgDiff}</span>
+                                        </div>
+                                    </button>
+
+                                    <AnimatePresence initial={false}>
+                                        {!isCollapsed && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="space-y-1 md:space-y-0 overflow-hidden rounded-3xl border border-white/5">
+                                                    {clusterItems.map((item) => (
+                                                        <KeywordRow
+                                                            key={item.keyword}
+                                                            data={item}
+                                                            isSaved={savedKeywords.some(k => k.keyword === item.keyword)}
+                                                            onSave={() => saveKeyword(item)}
+                                                            onClick={() => setSelectedKeyword(item)}
+                                                            mode={mode}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </motion.div>
+                            );
+                        })
                     ) : (
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
@@ -557,17 +640,19 @@ function KeywordRow({ data, isSaved, onSave, onClick, mode }: { data: KeywordRes
                 </div>
 
                 <div className="col-span-2 flex justify-center">
-                    <div className="flex items-center gap-3">
-                        <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} className="w-16 h-1.5 rounded-full overflow-hidden shrink-0">
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${data.competitionScore}%` }}
-                                transition={{ duration: 1.5, ease: 'easeOut' }}
-                                className={cn("h-full", difficultyBg)}
-                            />
-                        </div>
-                        <span className={cn("text-xs font-black w-6 text-right", difficultyColor)}>{data.competitionScore}</span>
-                    </div>
+                    {data.competitionScore > 70 ? (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-wider whitespace-nowrap">
+                            <span className="size-1.5 rounded-full bg-red-400 inline-block" />Hard · {data.competitionScore}
+                        </span>
+                    ) : data.competitionScore > 30 ? (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider whitespace-nowrap">
+                            <span className="size-1.5 rounded-full bg-amber-400 inline-block" />Medium · {data.competitionScore}
+                        </span>
+                    ) : (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider whitespace-nowrap">
+                            <span className="size-1.5 rounded-full bg-emerald-400 inline-block" />Easy · {data.competitionScore}
+                        </span>
+                    )}
                 </div>
 
                 <div className="col-span-1 flex justify-center">
