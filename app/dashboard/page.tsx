@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Search, TrendingUp, DollarSign, ExternalLink, Save, ArrowDown, Database, Check, X, FileText, Sparkles, TrendingDown, Minus, Shield, Globe, Zap, Download, FileJson, FileCode, Copy, Share2, Clock, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchStore, KeywordResult } from '@/store/searchStore';
@@ -37,6 +37,7 @@ export default function Dashboard() {
     const [collapsedClusters, setCollapsedClusters] = useState<Set<string>>(new Set());
     const mounted = useMounted();
     const router = useRouter();
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -47,6 +48,19 @@ export default function Dashboard() {
         };
         checkAuth();
     }, [router]);
+
+    // Global Cmd/Ctrl+K shortcut to focus search
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                searchInputRef.current?.focus();
+                searchInputRef.current?.select();
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, []);
 
     const fetchKeywords = useCallback(async (kw: string, currentMode = mode) => {
         if (!kw) return;
@@ -230,8 +244,9 @@ export default function Dashboard() {
                             <Search className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
                         }
                         <input
+                            ref={searchInputRef}
                             className="w-full bg-surface-dark border border-white/5 rounded-2xl pl-12 sm:pl-16 pr-4 sm:pr-6 py-3.5 sm:py-4 text-white placeholder:text-slate-600 font-bold focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm sm:text-base"
-                            placeholder={mode === 'competitor' ? "Competitor domain (e.g. apple.com)" : "Enter keyword or phrase..."}
+                            placeholder={mode === 'competitor' ? "Competitor domain (e.g. apple.com)" : "Enter keyword or phrase... (⌘K)"}
                             type="text"
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
@@ -352,8 +367,8 @@ export default function Dashboard() {
                                             <span className="text-[9px] font-black text-slate-600">{clusterItems.length} kw</span>
                                             <span className="text-[9px] font-black text-slate-600">{(totalVol / 1000).toFixed(0)}K vol</span>
                                             <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${avgDiff > 70 ? 'bg-red-500/10 text-red-400' :
-                                                    avgDiff > 30 ? 'bg-amber-500/10 text-amber-400' :
-                                                        'bg-emerald-500/10 text-emerald-400'
+                                                avgDiff > 30 ? 'bg-amber-500/10 text-amber-400' :
+                                                    'bg-emerald-500/10 text-emerald-400'
                                                 }`}>avg {avgDiff}</span>
                                         </div>
                                     </button>

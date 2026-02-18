@@ -19,12 +19,14 @@ import {
 } from 'lucide-react';
 import { useCreditStore } from '@/store/creditStore';
 import Link from 'next/link';
+import { useToast } from '@/components/Toast';
 
 export default function AccountPage() {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const credits = useCreditStore((state) => state.credits);
+    const { success } = useToast();
 
     useEffect(() => {
         const checkUser = async () => {
@@ -42,6 +44,7 @@ export default function AccountPage() {
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
+        success('Signed out successfully. See you next time!');
         router.push('/');
     };
 
@@ -75,7 +78,11 @@ export default function AccountPage() {
                             {user.email?.split('@')[0] || 'Explorer'}
                         </h1>
                         <div className="flex items-center gap-3">
-                            <span className="text-primary text-[10px] sm:text-xs font-black uppercase tracking-[0.2em]">Pro Member Since Feb 2026</span>
+                            <span className="text-primary text-[10px] sm:text-xs font-black uppercase tracking-[0.2em]">
+                                Member Since {user.created_at
+                                    ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                                    : 'Recently'}
+                            </span>
                         </div>
                     </div>
                 </header>

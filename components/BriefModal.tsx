@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Zap, Sparkles } from 'lucide-react';
+import { X, Zap, Sparkles, Copy, Check as CheckIcon } from 'lucide-react';
 import { KeywordResult } from '@/store/searchStore';
 
 interface Section {
@@ -67,6 +67,7 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
     const [fullPlan, setFullPlan] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [isBuilding, setIsBuilding] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         const fetchBrief = async () => {
@@ -97,12 +98,22 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
             });
             const data = await resp.json();
             if (resp.ok) setFullPlan(data.plan);
-            else alert('Failed to construct detailed roadmap.');
+            else console.error('Failed to construct detailed roadmap:', data);
         } catch (err) {
             console.error(err);
         } finally {
             setIsBuilding(false);
         }
+    };
+
+    const handleCopy = () => {
+        const text = fullPlan ?? brief;
+        if (!text) return;
+        const plain = text.replace(/#{1,3}\s*/g, '').replace(/\*{1,2}/g, '');
+        navigator.clipboard.writeText(plain).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
     };
 
     const activeContent = fullPlan ?? brief;
@@ -166,6 +177,16 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
 
                         {/* Actions */}
                         <div className="flex items-center gap-2 shrink-0">
+                            {activeContent && (
+                                <button
+                                    onClick={handleCopy}
+                                    className="p-2.5 rounded-2xl text-slate-400 hover:text-white transition-all"
+                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
+                                    title="Copy to clipboard"
+                                >
+                                    {copied ? <CheckIcon size={15} className="text-primary" /> : <Copy size={15} />}
+                                </button>
+                            )}
                             {fullPlan && (
                                 <button
                                     onClick={() => setFullPlan(null)}
