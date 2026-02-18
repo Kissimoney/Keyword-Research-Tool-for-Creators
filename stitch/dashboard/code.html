@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Keyword Research Tool for Creators</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#00b271",
+                        "background-light": "#f5f8f7",
+                        "background-dark": "#0f231c",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<!-- Top Navigation -->
+<nav class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/10 px-4 py-3">
+<div class="max-w-7xl mx-auto flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="bg-primary p-1.5 rounded-lg">
+<span class="material-symbols-outlined text-white text-xl">query_stats</span>
+</div>
+<h1 class="font-bold text-lg tracking-tight hidden sm:block">KeyGenie</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">database</span>
+<span class="text-xs font-bold text-primary uppercase tracking-wider">1,240 Credits</span>
+</div>
+<div class="size-9 rounded-full bg-primary/20 border border-primary/30 overflow-hidden">
+<img alt="User Profile Avatar" data-alt="Cartoon avatar of a male user with glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDd-HBreQxUtBAzEj3vXwaK1rxtNZ0e9na0d2O-e5q1OAxOr6JP5CN6JUpgbW6oMNmiSPWE4XjuR2hMraH75fYjYHFFOOX9c8WGVLIZKx-nkNK31oSG-EJ6WRp3Q1wdZDoekxEJfL8gnaYDgxdlMaYtFvFpxsjiQTeM3LU8tKeA8ebDfVA_tPlFnOe1J7dZ9XDNbTjI4X9fORH1Hf7wNuORYS9SFA7I7_O6Q9u_9uGrHJkMeJjMxvFjAkkIN7M3MBbLJiUbdRhO0YI"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- Sticky Search & Filter Bar -->
+<div class="sticky top-[61px] z-40 bg-background-light dark:bg-background-dark border-b border-primary/5 px-4 py-4 shadow-sm">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row gap-3">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-primary/20 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Enter keyword or phrase..." type="text" value="best mechanical keyboards 2024"/>
+</div>
+<div class="flex gap-2">
+<button class="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-primary/20 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined text-primary">tune</span>
+<span>Filters</span>
+</button>
+<button class="flex-1 md:flex-none px-8 py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 transition-opacity">
+                    Analyze
+                </button>
+</div>
+</div>
+</div>
+<!-- Main Content Area -->
+<main class="max-w-7xl mx-auto px-4 py-6 pb-32">
+<!-- Platform Selector Chips -->
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-6">
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-full font-medium whitespace-nowrap shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-sm">language</span> Google
+            </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-primary/20 rounded-full font-medium whitespace-nowrap hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-sm text-red-500">play_circle</span> YouTube
+            </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-primary/20 rounded-full font-medium whitespace-nowrap hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-sm text-pink-500">video_library</span> TikTok
+            </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-primary/20 rounded-full font-medium whitespace-nowrap hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-sm text-orange-500">shopping_cart</span> Amazon
+            </button>
+</div>
+<!-- Desktop Table Headers (Hidden on Mobile) -->
+<div class="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-100 dark:bg-primary/5 rounded-t-xl text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-primary/60 border-b border-primary/10">
+<div class="col-span-4">Keyword</div>
+<div class="col-span-2 text-center">Volume</div>
+<div class="col-span-2 text-center">Difficulty</div>
+<div class="col-span-1 text-center">CPC</div>
+<div class="col-span-1 text-center">Intent</div>
+<div class="col-span-2 text-right">Trend</div>
+</div>
+<!-- Results List -->
+<div class="flex flex-col gap-3 md:gap-0">
+<!-- Result Item 1 -->
+<div class="group bg-white dark:bg-slate-900/30 md:bg-transparent border border-slate-200 dark:border-primary/10 md:border-x-0 md:border-t-0 md:border-b p-4 md:px-6 md:py-5 rounded-xl md:rounded-none grid grid-cols-1 md:grid-cols-12 gap-4 items-center hover:bg-primary/5 transition-all">
+<div class="col-span-4 flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors text-lg md:text-base">best mechanical keyboards for typing</span>
+<span class="material-symbols-outlined text-slate-400 text-sm cursor-pointer hover:text-primary">open_in_new</span>
+</div>
+<span class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Updated 2h ago</span>
+</div>
+<div class="md:col-span-2 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Volume</span>
+<span class="font-semibold text-slate-700 dark:text-slate-200">45,000</span>
+</div>
+<div class="md:col-span-2 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Difficulty</span>
+<div class="flex items-center gap-2">
+<div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="bg-orange-500 h-full w-[65%]"></div>
+</div>
+<span class="text-sm font-bold text-orange-500">65</span>
+</div>
+</div>
+<div class="md:col-span-1 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">CPC</span>
+<span class="font-medium text-slate-600 dark:text-slate-300">$2.45</span>
+</div>
+<div class="md:col-span-1 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Intent</span>
+<span class="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Commercial</span>
+</div>
+<div class="md:col-span-2 flex md:justify-end items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Trend</span>
+<div class="h-8 w-24 flex items-end gap-0.5">
+<div class="flex-1 bg-primary/20 h-[40%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/20 h-[55%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/20 h-[50%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-[70%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/60 h-[85%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary h-[100%] rounded-t-sm"></div>
+</div>
+</div>
+</div>
+<!-- Result Item 2 -->
+<div class="group bg-white dark:bg-slate-900/30 md:bg-transparent border border-slate-200 dark:border-primary/10 md:border-x-0 md:border-t-0 md:border-b p-4 md:px-6 md:py-5 rounded-xl md:rounded-none grid grid-cols-1 md:grid-cols-12 gap-4 items-center hover:bg-primary/5 transition-all">
+<div class="col-span-4 flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors text-lg md:text-base">budget gaming keyboards under $50</span>
+<span class="material-symbols-outlined text-slate-400 text-sm cursor-pointer hover:text-primary">open_in_new</span>
+</div>
+<span class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Updated 1d ago</span>
+</div>
+<div class="md:col-span-2 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Volume</span>
+<span class="font-semibold text-slate-700 dark:text-slate-200">12,200</span>
+</div>
+<div class="md:col-span-2 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Difficulty</span>
+<div class="flex items-center gap-2">
+<div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[28%]"></div>
+</div>
+<span class="text-sm font-bold text-primary">28</span>
+</div>
+</div>
+<div class="md:col-span-1 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">CPC</span>
+<span class="font-medium text-slate-600 dark:text-slate-300">$1.12</span>
+</div>
+<div class="md:col-span-1 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Intent</span>
+<span class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Transactional</span>
+</div>
+<div class="md:col-span-2 flex md:justify-end items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Trend</span>
+<div class="h-8 w-24 flex items-end gap-0.5">
+<div class="flex-1 bg-primary/60 h-[80%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/60 h-[75%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/60 h-[70%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/60 h-[72%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/60 h-[68%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary h-[75%] rounded-t-sm"></div>
+</div>
+</div>
+</div>
+<!-- Result Item 3 -->
+<div class="group bg-white dark:bg-slate-900/30 md:bg-transparent border border-slate-200 dark:border-primary/10 md:border-x-0 md:border-t-0 md:border-b p-4 md:px-6 md:py-5 rounded-xl md:rounded-none grid grid-cols-1 md:grid-cols-12 gap-4 items-center hover:bg-primary/5 transition-all">
+<div class="col-span-4 flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors text-lg md:text-base">how to lube mechanical keyboard switches</span>
+<span class="material-symbols-outlined text-slate-400 text-sm cursor-pointer hover:text-primary">open_in_new</span>
+</div>
+<span class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Updated 5h ago</span>
+</div>
+<div class="md:col-span-2 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Volume</span>
+<span class="font-semibold text-slate-700 dark:text-slate-200">5,800</span>
+</div>
+<div class="md:col-span-2 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Difficulty</span>
+<div class="flex items-center gap-2">
+<div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="bg-red-500 h-full w-[82%]"></div>
+</div>
+<span class="text-sm font-bold text-red-500">82</span>
+</div>
+</div>
+<div class="md:col-span-1 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">CPC</span>
+<span class="font-medium text-slate-600 dark:text-slate-300">$0.85</span>
+</div>
+<div class="md:col-span-1 flex md:justify-center items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Intent</span>
+<span class="bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Informational</span>
+</div>
+<div class="md:col-span-2 flex md:justify-end items-center gap-2 md:gap-0">
+<span class="md:hidden text-xs font-bold text-slate-400 uppercase w-20">Trend</span>
+<div class="h-8 w-24 flex items-end gap-0.5">
+<div class="flex-1 bg-red-400/20 h-[30%] rounded-t-sm"></div>
+<div class="flex-1 bg-red-400/20 h-[35%] rounded-t-sm"></div>
+<div class="flex-1 bg-red-400/20 h-[45%] rounded-t-sm"></div>
+<div class="flex-1 bg-red-400/20 h-[30%] rounded-t-sm"></div>
+<div class="flex-1 bg-red-400/20 h-[25%] rounded-t-sm"></div>
+<div class="flex-1 bg-red-500 h-[20%] rounded-t-sm"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination / Load More -->
+<div class="mt-8 flex justify-center">
+<button class="px-6 py-2.5 border border-primary/30 rounded-full text-primary font-bold hover:bg-primary/5 transition-colors flex items-center gap-2">
+<span>Show More Keywords</span>
+<span class="material-symbols-outlined text-sm">keyboard_arrow_down</span>
+</button>
+</div>
+</main>
+<!-- Bottom Actions Bar (Floating) -->
+<div class="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/95 dark:via-background-dark/95 to-transparent z-50">
+<div class="max-w-xl mx-auto flex gap-3 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-primary/20 rounded-2xl shadow-2xl">
+<button class="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-100 dark:bg-primary/10 text-slate-700 dark:text-primary rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined text-xl">download</span>
+<span>Export CSV</span>
+</button>
+<button class="flex-[2] flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-xl font-bold hover:shadow-lg hover:shadow-primary/30 transition-all">
+<span class="material-symbols-outlined text-xl">folder_zip</span>
+<span>Save to Project</span>
+</button>
+</div>
+</div>
+<!-- Mobile Bottom Nav -->
+<div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-primary/10 flex items-center justify-around px-2 py-2 md:hidden z-[60] pb-safe">
+<a class="flex flex-col items-center gap-1 p-2 text-primary" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Research</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400" href="#">
+<span class="material-symbols-outlined">folder</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Projects</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">History</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Profile</span>
+</a>
+</div>
+</body></html>

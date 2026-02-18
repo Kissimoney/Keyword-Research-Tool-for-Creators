@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pricing | Keyword Creator Tool</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#00b271",
+                        "background-light": "#f5f8f7",
+                        "background-dark": "#0f231c",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .pro-glow {
+            box-shadow: 0 0 40px -10px rgba(0, 178, 113, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header / Navigation -->
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 justify-between sticky top-0 z-50 border-b border-primary/10">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center">
+<span class="material-symbols-outlined text-3xl">key_visualizer</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Keyword Creator</h2>
+<div class="size-10 flex items-center justify-center">
+<span class="material-symbols-outlined">menu</span>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- Hero Section -->
+<section class="px-6 pt-10 pb-6 text-center">
+<h1 class="text-slate-900 dark:text-white tracking-tight text-3xl md:text-4xl font-bold leading-tight pb-3">Choose Your Growth Path</h1>
+<p class="text-slate-600 dark:text-slate-400 text-base font-normal max-w-md mx-auto">Find the right keywords to fuel your content strategy and dominate the algorithm.</p>
+</section>
+<!-- Billing Toggle -->
+<div class="flex justify-center px-4 py-6">
+<div class="flex h-12 w-full max-w-xs items-center justify-center rounded-xl bg-slate-200 dark:bg-primary/10 p-1.5">
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-4 transition-all has-[:checked]:bg-white dark:has-[:checked]:bg-primary has-[:checked]:shadow-sm text-slate-600 dark:text-slate-400 has-[:checked]:text-slate-900 dark:has-[:checked]:text-white text-sm font-semibold">
+<span>Monthly</span>
+<input checked="" class="hidden" name="billing" type="radio" value="monthly"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-4 transition-all has-[:checked]:bg-white dark:has-[:checked]:bg-primary has-[:checked]:shadow-sm text-slate-600 dark:text-slate-400 has-[:checked]:text-slate-900 dark:has-[:checked]:text-white text-sm font-semibold">
+<span class="flex items-center gap-1">Yearly <span class="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">-20%</span></span>
+<input class="hidden" name="billing" type="radio" value="yearly"/>
+</label>
+</div>
+</div>
+<!-- Pricing Cards Grid -->
+<div class="px-4 space-y-6 max-w-lg mx-auto lg:max-w-5xl lg:grid lg:grid-cols-3 lg:space-y-0 lg:gap-6 lg:items-start">
+<!-- Free Plan -->
+<div class="glass-card rounded-2xl p-6 flex flex-col border-slate-200 dark:border-white/5 bg-white dark:bg-white/5">
+<div class="mb-4">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold">Essentials</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Perfect for hobbyists</p>
+</div>
+<div class="mb-6">
+<span class="text-4xl font-bold text-slate-900 dark:text-white">$0</span>
+<span class="text-slate-500 dark:text-slate-400">/mo</span>
+</div>
+<ul class="space-y-3 mb-8 flex-1">
+<li class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+                        30 searches per month
+                    </li>
+<li class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+                        Basic keyword analytics
+                    </li>
+<li class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+                        1 user account
+                    </li>
+</ul>
+<button class="w-full py-3 rounded-xl border-2 border-slate-200 dark:border-white/10 font-bold text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                    Current Plan
+                </button>
+</div>
+<!-- Pro Plan (Highlighted) -->
+<div class="relative glass-card rounded-2xl p-6 flex flex-col border-primary/50 bg-slate-900 dark:bg-primary/5 pro-glow scale-105 z-10">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
+                    Most Popular
+                </div>
+<div class="mb-4">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold">Content King</h3>
+<p class="text-slate-500 dark:text-slate-300 text-sm">For serious creators</p>
+</div>
+<div class="mb-6">
+<span class="text-4xl font-bold text-slate-900 dark:text-white">$29</span>
+<span class="text-slate-500 dark:text-slate-300">/mo</span>
+</div>
+<ul class="space-y-3 mb-8 flex-1">
+<li class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-primary text-xl font-bold">check_circle</span>
+                        1,000 searches per month
+                    </li>
+<li class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-primary text-xl font-bold">check_circle</span>
+                        Advanced trend mapping
+                    </li>
+<li class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-primary text-xl font-bold">check_circle</span>
+                        Competitor analysis tools
+                    </li>
+<li class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-primary text-xl font-bold">check_circle</span>
+                        Priority email support
+                    </li>
+</ul>
+<button class="w-full py-3 rounded-xl bg-primary text-white font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+                    Upgrade Now
+                </button>
+</div>
+<!-- Credit Packs -->
+<div class="glass-card rounded-2xl p-6 flex flex-col border-slate-200 dark:border-white/5 bg-white dark:bg-white/5">
+<div class="mb-4">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold">Fuel Up</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm">One-time top ups</p>
+</div>
+<div class="space-y-4 mb-8">
+<div class="p-4 rounded-xl border border-primary/20 bg-primary/5 flex items-center justify-between">
+<div>
+<p class="font-bold text-slate-900 dark:text-white">50 Credits</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Never expires</p>
+</div>
+<p class="text-xl font-bold text-primary">$9</p>
+</div>
+<div class="p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex items-center justify-between">
+<div>
+<p class="font-bold text-slate-900 dark:text-white">200 Credits</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Best for big projects</p>
+</div>
+<p class="text-xl font-bold text-slate-900 dark:text-white">$25</p>
+</div>
+</div>
+<button class="w-full py-3 rounded-xl border-2 border-slate-200 dark:border-white/10 font-bold text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors mt-auto">
+                    Buy Credits
+                </button>
+</div>
+</div>
+<!-- Stripe Integration Placeholder -->
+<section class="mt-16 px-6 pb-12 text-center">
+<div class="flex flex-col items-center gap-4 opacity-60">
+<div class="flex items-center gap-2 grayscale brightness-200">
+<span class="material-symbols-outlined">lock</span>
+<span class="text-sm font-medium">Secure Payment powered by Stripe</span>
+</div>
+<div class="flex gap-4">
+<div class="h-6 w-10 bg-slate-300/20 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-xs">credit_card</span>
+</div>
+<div class="h-6 w-10 bg-slate-300/20 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-xs">account_balance</span>
+</div>
+<div class="h-6 w-10 bg-slate-300/20 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-xs">google_plus_reshare</span>
+</div>
+</div>
+</div>
+</section>
+<!-- FAQ Section -->
+<section class="px-6 py-12 max-w-2xl mx-auto">
+<h2 class="text-2xl font-bold text-center mb-8">Common Questions</h2>
+<div class="space-y-4">
+<div class="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5">
+<button class="flex items-center justify-between w-full text-left font-semibold">
+                        Can I cancel anytime?
+                        <span class="material-symbols-outlined">expand_more</span>
+</button>
+<p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Yes, you can cancel your subscription at any time from your account settings without any hidden fees.</p>
+</div>
+<div class="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5">
+<button class="flex items-center justify-between w-full text-left font-semibold">
+                        What are credits?
+                        <span class="material-symbols-outlined">expand_more</span>
+</button>
+<p class="mt-2 text-sm text-slate-500 dark:text-slate-400">1 credit equals 1 keyword search. Subscription credits reset monthly, while Credit Pack credits never expire.</p>
+</div>
+<div class="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5">
+<button class="flex items-center justify-between w-full text-left font-semibold">
+                        Do you offer refunds?
+                        <span class="material-symbols-outlined">expand_more</span>
+</button>
+<p class="mt-2 text-sm text-slate-500 dark:text-slate-400">We offer a 7-day money-back guarantee if you're not satisfied with the results, no questions asked.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full flex gap-2 border-t border-slate-200 dark:border-[#273a33] bg-white dark:bg-[#1b2823] px-4 pb-4 pt-2 z-50">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-[#9abcaf]" href="#">
+<span class="material-symbols-outlined">search</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Search</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-[#9abcaf]" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Trends</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 rounded-full text-primary font-bold" href="#">
+<span class="material-symbols-outlined font-bold">sell</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Pricing</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-[#9abcaf]" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Account</p>
+</a>
+</nav>
+</body></html>

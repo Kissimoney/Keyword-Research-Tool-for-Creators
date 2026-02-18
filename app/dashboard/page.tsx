@@ -1,0 +1,702 @@
+"use client";
+
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { Search, TrendingUp, DollarSign, ExternalLink, Save, ArrowDown, Database, Check, X, FileText, Sparkles, TrendingDown, Minus, Shield, Globe, Zap, Download, FileJson, FileCode, Copy, Share2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchStore, KeywordResult } from '@/store/searchStore';
+import { useCreditStore } from '@/store/creditStore';
+import { useProjectStore } from '@/store/projectStore';
+import { cn } from '@/lib/utils';
+import { useMounted } from '@/hooks/use-mounted';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+
+
+export default function Dashboard() {
+    const { query, setQuery, results, setResults, isLoading, setIsLoading } = useSearchStore();
+    const { credits, useCredits } = useCreditStore();
+    const { saveKeyword, savedKeywords, fetchKeywords: fetchSaved } = useProjectStore();
+
+    const [searchInput, setSearchInput] = useState(query);
+    const [selectedKeyword, setSelectedKeyword] = useState<KeywordResult | null>(null);
+    const [mode, setMode] = useState<'web' | 'video' | 'competitor'>('web');
+    const [showExportMenu, setShowExportMenu] = useState(false);
+    const mounted = useMounted();
+    const router = useRouter();
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                router.push('/auth');
+            }
+        };
+        checkAuth();
+    }, [router]);
+
+    const fetchKeywords = useCallback(async (kw: string, currentMode = mode) => {
+        if (!kw) return;
+        if (credits <= 0) {
+            alert("Insufficient credits. Please upgrade.");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const resp = await fetch('/api/keywords', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keyword: kw, mode: currentMode }),
+            });
+            const data = await resp.json();
+
+            if (resp.ok) {
+                setResults(data);
+                useCredits(1);
+            } else {
+                alert(`Error: ${data.error}`);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [credits, setIsLoading, setResults, useCredits, mode]);
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!searchInput.trim()) return;
+        setQuery(searchInput);
+        fetchKeywords(searchInput);
+    };
+
+    const handleSaveAll = async () => {
+        setIsLoading(true);
+        try {
+            for (const item of results) {
+                await saveKeyword(item);
+            }
+            alert("All intelligence synced successfully!");
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const downloadCSV = () => {
+        const headers = ["Keyword", "Search Volume", "Competition Score", "CPC", "Intent", "Trend", "Strategy", "Cluster"];
+        const rows = results.map(r => [
+            `"${r.keyword}"`,
+            r.searchVolume,
+            r.competitionScore,
+            r.cpcValue,
+            r.intentType,
+            r.trendDirection,
+            `"${(r.strategy || '').replace(/"/g, '""')}"`,
+            `"${(r.cluster || '').replace(/"/g, '""')}"`
+        ]);
+        const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.style.display = 'none';
+        link.href = url;
+        link.download = `stitch-export-${query || 'research'}.csv`;
+        document.body.appendChild(link);
+        link.click();
+
+        // Brief delay before cleanup and UI update to prevent extension collision
+        setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            setShowExportMenu(false);
+        }, 100);
+    };
+
+    const downloadJSON = () => {
+        const dataStr = JSON.stringify(results, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.style.display = 'none';
+        link.href = url;
+        link.download = `stitch-intelligence-${query || 'research'}.json`;
+        document.body.appendChild(link);
+        link.click();
+
+        setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            setShowExportMenu(false);
+        }, 100);
+    };
+
+    const copyToNotion = () => {
+        const text = results.map(r => `| ${r.keyword} | ${r.searchVolume} | ${r.competitionScore}% | ${r.intentType} |`).join('\n');
+        const table = `### Keyword Intelligence: ${query}\n\n| Keyword | Volume | Difficulty | Intent |\n|---|---|---|---|\n${text}\n\n*Generated by Stitch AI Export Engine*`;
+
+        // Use a more stable copy method
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(table).then(() => {
+                alert("Markdown Table Copied for Notion!");
+                setShowExportMenu(false);
+            });
+        } else {
+            // Fallback for older browsers or insecure contexts
+            const textArea = document.createElement("textarea");
+            textArea.value = table;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert("Markdown Table Copied!");
+            setShowExportMenu(false);
+        }
+    };
+
+
+    useEffect(() => {
+        if (mounted && results.length === 0 && query) {
+            fetchKeywords(query);
+            fetchSaved();
+        }
+    }, [mounted, query, results.length, fetchKeywords, fetchSaved]);
+
+    const groupedResults = useMemo(() => {
+        const groups: Record<string, KeywordResult[]> = {};
+        results.forEach(item => {
+            const cluster = item.cluster || 'General Intelligence';
+            if (!groups[cluster]) groups[cluster] = [];
+            groups[cluster].push(item);
+        });
+        return groups;
+    }, [results]);
+
+    if (!mounted) return null;
+
+    return (
+        <div className="min-h-screen pb-32">
+            <AnimatePresence mode="wait">
+                {selectedKeyword && (
+                    <BriefModal
+                        key="brief-modal"
+                        keyword={selectedKeyword}
+                        onClose={() => setSelectedKeyword(null)}
+                    />
+                )}
+            </AnimatePresence>
+
+            <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="max-w-7xl mx-auto px-4 pt-12 pb-6"
+            >
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-surface p-6 rounded-[32px] border border-white/10 shadow-2xl backdrop-blur-xl">
+                    <form onSubmit={handleSearchSubmit} className="flex-1 w-full relative group">
+                        {mode === 'competitor' ?
+                            <Globe className="absolute left-6 top-1/2 -translate-y-1/2 text-primary animate-pulse" size={20} /> :
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" size={20} />
+                        }
+                        <input
+                            className="w-full bg-surface-dark border border-white/5 rounded-2xl pl-16 pr-6 py-4 text-white placeholder:text-slate-600 font-bold focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-lg"
+                            placeholder={mode === 'competitor' ? "Enter competitor domain (e.g. apple.com)..." : "Enter keyword or phrase..."}
+                            type="text"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                        />
+                    </form>
+
+                    <div className="flex p-1.5 bg-surface-dark border border-white/5 rounded-2xl overflow-hidden shrink-0">
+                        {[
+                            { id: 'web', label: 'Web', icon: <Database size={14} /> },
+                            { id: 'video', label: 'Video', icon: <Sparkles size={14} /> },
+                            { id: 'competitor', label: 'Pulse', icon: <Zap size={14} /> }
+                        ].map((m) => (
+                            <button
+                                key={m.id}
+                                onClick={() => setMode(m.id as any)}
+                                className={cn(
+                                    "px-5 py-2.5 rounded-xl font-black text-xs transition-all flex items-center gap-2 whitespace-nowrap",
+                                    mode === m.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-500 hover:text-slate-300"
+                                )}
+                            >
+                                {m.icon}
+                                {m.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <button
+                        onClick={handleSearchSubmit}
+                        disabled={isLoading}
+                        className="w-full md:w-auto px-10 py-4 bg-primary text-white font-black rounded-2xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                        {isLoading ? (
+                            <>
+                                <Sparkles className="animate-pulse size-5" />
+                                {mode === 'competitor' ? 'Scraping DNA...' : 'Analyzing...'}
+                            </>
+                        ) : (
+                            mode === 'competitor' ? 'Deep Scan' : 'Analyze'
+                        )}
+                    </button>
+                </div>
+            </motion.div>
+
+            <main className="max-w-7xl mx-auto px-4 py-8">
+                <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} className="hidden md:grid grid-cols-12 gap-4 px-8 py-4 border border-white/5 rounded-t-3xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
+                    <div className="col-span-4 text-left">Keyword Insight</div>
+                    <div className="col-span-2 text-center">Potential</div>
+                    <div className="col-span-2 text-center">Difficulty</div>
+                    <div className="col-span-1 text-center">CPC</div>
+                    <div className="col-span-1 text-center">Intent</div>
+                    <div className="col-span-2 text-right">Momentum</div>
+                </div>
+
+                <div className="space-y-8">
+                    {results.length > 0 ? (
+                        Object.entries(groupedResults).map(([cluster, clusterItems], clusterIdx) => (
+                            <motion.div
+                                key={cluster}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: clusterIdx * 0.1 }}
+                            >
+                                <div className="flex items-center gap-3 mb-4 px-4 overflow-hidden">
+                                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em] whitespace-nowrap">{cluster}</span>
+                                    <div className="h-px w-full bg-gradient-to-r from-primary/20 to-transparent"></div>
+                                </div>
+                                <div className="space-y-1 md:space-y-0 overflow-hidden rounded-3xl border border-white/5">
+                                    {clusterItems.map((item) => (
+                                        <KeywordRow
+                                            key={item.keyword}
+                                            data={item}
+                                            isSaved={savedKeywords.some(k => k.keyword === item.keyword)}
+                                            onSave={() => saveKeyword(item)}
+                                            onClick={() => setSelectedKeyword(item)}
+                                            mode={mode}
+                                        />
+                                    ))}
+                                </div>
+                            </motion.div>
+                        ))
+                    ) : (
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
+                            className="text-center py-32 rounded-[40px] border border-dashed border-white/10"
+                        >
+                            <div className="bg-primary/20 size-20 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-12 transition-transform shadow-2xl shadow-primary/10">
+                                {mode === 'competitor' ? <Shield className="text-primary size-10" /> : <Sparkles className="text-primary size-10" />}
+                            </div>
+                            <h3 className="text-2xl font-black text-white mb-3 tracking-tight">
+                                {mode === 'competitor' ? 'Perform Competitive Pulse' : 'Ready for Alpha?'}
+                            </h3>
+                            <p className="text-slate-500 max-w-sm mx-auto font-medium">
+                                {mode === 'competitor' ?
+                                    'Enter a competitor URL to scrape their site DNA and reveal hidden keyword opportunities they are actively ranking for.' :
+                                    'Select a mode and enter a keyword to generate market-leading intelligence for your next project.'
+                                }
+                            </p>
+                        </motion.div>
+                    )}
+                </div>
+            </main>
+
+            <AnimatePresence>
+                {results.length > 0 && (
+                    <motion.div
+                        key="action-bar"
+                        initial={{ y: 100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 100, opacity: 0 }}
+                        className="fixed bottom-8 left-0 right-0 p-4 z-40"
+                    >
+                        <div className="max-w-3xl mx-auto flex items-center gap-4 p-3 bg-surface border border-white/10 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-2xl ring-1 ring-white/10">
+                            <div className="flex -space-x-2 pl-4">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="size-8 rounded-full border-2 border-surface bg-slate-800 ring-1 ring-primary/20 overflow-hidden">
+                                        <img src={`https://i.pravatar.cc/100?u=${i + 20}`} alt="user" />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="h-8 w-px bg-white/10 mx-2"></div>
+
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowExportMenu(!showExportMenu)}
+                                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
+                                    className="flex items-center gap-2 px-6 py-3.5 text-slate-300 rounded-2xl font-black text-[10px] hover:bg-white/10 transition-all border border-white/5 uppercase tracking-[0.2em]"
+                                >
+                                    <Download size={16} className="text-primary" />
+                                    Export
+                                </button>
+
+                                <AnimatePresence>
+                                    {showExportMenu && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: -10, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            className="absolute bottom-full left-0 mb-4 w-56 bg-surface border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
+                                        >
+                                            <div className="p-2 space-y-1">
+                                                <button onClick={downloadCSV} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:bg-white/5 rounded-xl transition-colors">
+                                                    <FileCode size={18} className="text-emerald-400" />
+                                                    Download CSV
+                                                </button>
+                                                <button onClick={downloadJSON} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:bg-white/5 rounded-xl transition-colors">
+                                                    <FileJson size={18} className="text-blue-400" />
+                                                    Download JSON
+                                                </button>
+                                                <div className="h-px bg-white/5 my-1 mx-2"></div>
+                                                <button onClick={copyToNotion} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:bg-white/5 rounded-xl transition-colors">
+                                                    <Database size={18} className="text-primary" />
+                                                    Push to Notion
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            <button
+                                onClick={handleSaveAll}
+                                disabled={isLoading}
+                                className="flex-1 flex items-center justify-center gap-3 py-4 bg-primary text-white rounded-2xl font-black hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-primary/20 group uppercase text-xs tracking-widest"
+                            >
+                                <Save size={20} className="group-hover:rotate-12 transition-transform" />
+                                <span>Save All Discovery</span>
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+function KeywordRow({ data, isSaved, onSave, onClick, mode }: { data: KeywordResult, isSaved: boolean, onSave: () => void, onClick: () => void, mode: string }) {
+    const [saving, setSaving] = useState(false);
+    const difficultyColor = data.competitionScore > 70 ? 'text-red-500' : data.competitionScore > 30 ? 'text-orange-500' : 'text-primary';
+    const difficultyBg = data.competitionScore > 70 ? 'bg-red-500' : data.competitionScore > 30 ? 'bg-orange-500' : 'bg-primary';
+
+    const handleSave = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isSaved) return;
+        setSaving(true);
+        await onSave();
+        setSaving(false);
+    };
+
+    return (
+        <motion.div
+            initial={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
+            whileHover={{ backgroundColor: 'rgba(30, 41, 59, 1)' }}
+            onClick={onClick}
+            className="group border-b border-white/5 md:px-8 md:py-6 p-5 grid grid-cols-1 md:grid-cols-12 gap-5 items-center transition-all cursor-pointer last:border-b-0"
+        >
+            <div className="col-span-4 flex flex-col">
+                <div className="flex items-center gap-3">
+                    <span className="font-bold text-white group-hover:text-primary transition-colors text-lg md:text-base tracking-tight">
+                        {data.keyword}
+                    </span>
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className={cn("p-1.5 rounded-lg hover:bg-white/10 transition-colors", isSaved ? "text-primary" : "text-slate-600", saving && "animate-spin")}
+                        >
+                            {isSaved ? <Check size={14} /> : <Save size={14} />}
+                        </button>
+                        <FileText size={14} className="text-slate-600 hover:text-primary transition-colors" />
+                    </div>
+                    {mode === 'competitor' && (
+                        <span className="text-[8px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20 uppercase tracking-tighter">
+                            Gap Data
+                        </span>
+                    )}
+                </div>
+                {data.strategy && <span className="text-[10px] text-slate-500 mt-1 line-clamp-1 italic font-medium">{data.strategy}</span>}
+            </div>
+
+            <div className="md:col-span-2 flex md:justify-center items-center gap-3">
+                <span className="md:hidden text-[10px] font-black text-slate-500 uppercase w-20 tracking-widest text-left">Potential</span>
+                <span className="font-black text-slate-200 text-sm">{data.searchVolume.toLocaleString()}</span>
+            </div>
+
+            <div className="md:col-span-2 flex md:justify-center items-center gap-3">
+                <span className="md:hidden text-[10px] font-black text-slate-500 uppercase w-20 tracking-widest text-left">Difficulty</span>
+                <div className="flex items-center gap-3 grow md:grow-0">
+                    <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} className="w-16 h-1.5 rounded-full overflow-hidden shrink-0">
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${data.competitionScore}%` }}
+                            transition={{ duration: 1.5, ease: 'easeOut' }}
+                            className={cn("h-full", difficultyBg)}
+                        />
+                    </div>
+                    <span className={cn("text-xs font-black w-6 text-right", difficultyColor)}>{data.competitionScore}</span>
+                </div>
+            </div>
+
+            <div className="md:col-span-1 flex md:justify-center items-center gap-3">
+                <span className="md:hidden text-[10px] font-black text-slate-500 uppercase w-20 tracking-widest text-left">CPC</span>
+                <span className="font-bold text-slate-400 text-sm">${data.cpcValue.toFixed(2)}</span>
+            </div>
+
+            <div className="md:col-span-1 flex md:justify-center items-center gap-3">
+                <span className="md:hidden text-[10px] font-black text-slate-500 uppercase w-20 tracking-widest text-left">Intent</span>
+                <span className={cn(
+                    "text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border",
+                    data.intentType === 'Commercial' || data.intentType === 'Viral' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                        data.intentType === 'Transactional' || data.intentType === 'Entertainment' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                            'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                )}>
+                    {data.intentType}
+                </span>
+            </div>
+
+            <div className="md:col-span-2 flex md:justify-end items-center gap-3">
+                <span className="md:hidden text-[10px] font-black text-slate-500 uppercase w-20 tracking-widest text-left">Trend</span>
+                <div className="h-10 w-24 relative overflow-hidden">
+                    <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible">
+                        <motion.path
+                            initial={{ pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ duration: 1.5, ease: "easeInOut" }}
+                            d={useMemo(() => {
+                                const points = Array.from({ length: 8 }, (_, i) => ({
+                                    x: i * 14.2,
+                                    y: 20 + (Math.sin(i * 0.8) * 12) + (Math.random() * 8)
+                                }));
+                                return `M ${points[0].x} ${points[0].y} ` +
+                                    points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
+                            }, [])}
+                            fill="none"
+                            stroke={data.trendDirection === 'up' ? "#00B140" : data.trendDirection === 'down' ? "#ef4444" : "#64748b"}
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
+                </div>
+            </div>
+        </motion.div>
+    );
+}
+
+function BriefModal({ keyword, onClose }: { keyword: KeywordResult, onClose: () => void }) {
+    const [brief, setBrief] = useState<string | null>(null);
+    const [fullPlan, setFullPlan] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isBuilding, setIsBuilding] = useState(false);
+
+    useEffect(() => {
+        const fetchBrief = async () => {
+            try {
+                const resp = await fetch('/api/keywords/brief', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword: keyword.keyword }),
+                });
+                const data = await resp.json();
+                setBrief(data.brief);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchBrief();
+    }, [keyword]);
+
+    const handleBuildStrategy = async () => {
+        setIsBuilding(true);
+        try {
+            const resp = await fetch('/api/keywords/build', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    keyword: keyword.keyword,
+                    brief: brief
+                }),
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                setFullPlan(data.plan);
+            } else {
+                alert("Failed to construct detailed roadmap.");
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsBuilding(false);
+        }
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-end bg-black/80 backdrop-blur-md p-4"
+            onClick={onClose}
+        >
+            <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+                className="w-full max-w-2xl h-[95vh] bg-surface rounded-[40px] shadow-2xl border border-white/10 overflow-hidden flex flex-col"
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="p-10 border-b border-white/5 flex items-center justify-between bg-surface-dark/30">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20 flex items-center gap-2">
+                                <span className="size-1.5 rounded-full bg-primary animate-pulse"></span>
+                                <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                                    {fullPlan ? 'Master Execution Plan' : 'A.I. Strategy Brief'}
+                                </span>
+                            </div>
+                        </div>
+                        <h2 className="text-3xl font-black text-white tracking-tight">{keyword.keyword}</h2>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {fullPlan && (
+                            <button
+                                onClick={() => setFullPlan(null)}
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all text-[10px] font-black uppercase text-slate-400 border border-white/5"
+                            >
+                                Back to Brief
+                            </button>
+                        )}
+                        <button onClick={onClose} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all hover:rotate-90 text-white">
+                            <X />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-10 space-y-8 scroll-smooth">
+                    {loading || isBuilding ? (
+                        <div className="flex flex-col items-center justify-center h-full gap-6 text-center">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                            >
+                                <Sparkles className="text-primary size-16" />
+                            </motion.div>
+                            <div>
+                                <p className="text-xl font-black text-white mb-2">
+                                    {isBuilding ? 'Constructing Strategic Roadmap...' : 'Analyzing Market Gaps...'}
+                                </p>
+                                <p className="text-slate-500 text-sm font-medium">This usually takes a few seconds to process DNA.</p>
+                            </div>
+                        </div>
+                    ) : fullPlan ? (
+                        <div className="space-y-12">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="grid grid-cols-1 gap-8"
+                            >
+                                {fullPlan.split('##').slice(1).map((section, idx) => {
+                                    const lines = section.trim().split('\n');
+                                    const title = lines[0].trim();
+                                    const content = lines.slice(1).join('\n');
+
+                                    return (
+                                        <motion.div
+                                            key={idx}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: idx * 0.1 }}
+                                            className="group relative"
+                                        >
+                                            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-blue-500/30 rounded-[32px] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+                                            <div className="relative bg-surface-dark border border-white/10 p-8 rounded-[32px] shadow-2xl overflow-hidden">
+                                                <div className="flex items-center gap-4 mb-6">
+                                                    <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-inner">
+                                                        <span className="text-xl">{title.split(' ')[0]}</span>
+                                                    </div>
+                                                    <h3 className="text-xl font-black text-white tracking-tight uppercase">
+                                                        {title.replace(/^[^\s]+\s+/, '')}
+                                                    </h3>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    {content.split('*').filter(l => l.trim()).map((bullet, bIdx) => {
+                                                        const [boldPart, ...rest] = bullet.split(':');
+                                                        return (
+                                                            <div key={bIdx} className="flex gap-4 group/item">
+                                                                <div className="mt-2.5 size-1.5 rounded-full bg-primary/60 shrink-0 group-hover/item:scale-150 transition-transform shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"></div>
+                                                                <p className="text-slate-400 leading-relaxed font-medium">
+                                                                    {rest.length > 0 ? (
+                                                                        <>
+                                                                            <strong className="text-white font-black">{boldPart}:</strong>
+                                                                            {rest.join(':')}
+                                                                        </>
+                                                                    ) : (
+                                                                        bullet
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+
+                                                {/* Decorative background number */}
+                                                <div className="absolute -bottom-6 -right-4 text-9xl font-black text-white/[0.02] select-none pointer-events-none italic">
+                                                    0{idx + 1}
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
+                            </motion.div>
+                        </div>
+                    ) : (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="prose prose-invert max-w-none 
+                            [&>h1]:hidden
+                            [&>h2]:text-white [&>h2]:text-2xl [&>h2]:font-black [&>h2]:mt-10 [&>h2]:mb-4 [&>h2]:flex [&>h2]:items-center [&>h2]:gap-3
+                            [&>h3]:text-primary [&>h3]:text-xl [&>h3]:font-black [&>h3]:mt-6 [&>h3]:mb-2
+                            [&>p]:text-slate-400 [&>p]:leading-relaxed [&>p]:text-lg
+                            [&>ul]:list-none [&>ul]:space-y-4 [&>ul]:p-0
+                            [&>li]:bg-white/5 [&>li]:p-4 [&>li]:rounded-2xl [&>li]:border [&>li]:border-white/5 [&>li]:font-bold [&>li]:text-slate-200 [&>li]:shadow-lg
+                            [&>strong]:text-white [&>strong]:font-black
+                            [&>hr]:border-white/5 [&>hr]:my-8"
+                            dangerouslySetInnerHTML={{ __html: brief?.replace(/\n/g, '<br/>') || '' }}
+                        />
+                    )}
+
+                </div>
+
+                <div style={{ backgroundColor: 'rgba(13, 33, 55, 0.5)' }} className="p-8 border-t border-white/10 flex gap-4">
+                    {!fullPlan ? (
+                        <button
+                            onClick={handleBuildStrategy}
+                            disabled={isBuilding}
+                            className="flex-1 bg-primary text-white py-5 rounded-3xl font-black hover:brightness-110 active:scale-95 transition-all uppercase tracking-widest text-sm shadow-xl shadow-primary/20 flex items-center justify-center gap-3 disabled:opacity-50"
+                        >
+                            <Zap size={20} />
+                            Build Full Strategy
+                        </button>
+                    ) : (
+                        <button
+                            onClick={onClose}
+                            className="flex-1 bg-slate-800 text-white py-5 rounded-3xl font-black hover:bg-slate-700 active:scale-95 transition-all uppercase tracking-widest text-sm border border-white/10"
+                        >
+                            Close Intel
+                        </button>
+                    )}
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+}

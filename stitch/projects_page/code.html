@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Projects - Creator Keyword Tool</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#00b271",
+                        "background-light": "#f5f8f7",
+                        "background-dark": "#0f231c",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-tab {
+            border-bottom: 3px solid #00b271;
+            color: white;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- Header -->
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-primary/10">
+<div class="flex items-center gap-3">
+<div class="bg-primary/20 p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary text-2xl">folder_special</span>
+</div>
+<div>
+<h1 class="text-white text-xl font-bold leading-tight tracking-tight">Keyword Projects</h1>
+<p class="text-primary/60 text-xs font-medium">14 active lists • Synced</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-white">search</span>
+</button>
+<button class="flex size-10 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">create_new_folder</span>
+</button>
+</div>
+</header>
+<!-- Tabs -->
+<nav class="bg-background-light dark:bg-background-dark border-b border-primary/10">
+<div class="flex px-4 gap-6 overflow-x-auto no-scrollbar">
+<a class="flex flex-col items-center justify-center border-b-[3px] border-primary text-white pb-3 pt-4" href="#">
+<p class="text-sm font-bold tracking-wide">All Folders</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-transparent text-white/40 pb-3 pt-4 hover:text-white/70" href="#">
+<p class="text-sm font-bold tracking-wide">YouTube</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-transparent text-white/40 pb-3 pt-4 hover:text-white/70" href="#">
+<p class="text-sm font-bold tracking-wide">TikTok</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-transparent text-white/40 pb-3 pt-4 hover:text-white/70" href="#">
+<p class="text-sm font-bold tracking-wide">Blog</p>
+</a>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto p-4 space-y-6">
+<!-- Folder Section -->
+<section>
+<div class="flex items-center justify-between mb-3">
+<h2 class="text-white/90 text-sm font-semibold uppercase tracking-widest">Active Folders</h2>
+<span class="text-primary text-xs font-bold">See All</span>
+</div>
+<!-- Folder Card 1 -->
+<div class="bg-primary/5 border border-primary/10 rounded-xl p-4 mb-4">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="bg-primary rounded-lg p-2 text-white">
+<span class="material-symbols-outlined">folder</span>
+</div>
+<div>
+<h3 class="text-white font-bold">YouTube Tech Reviews</h3>
+<p class="text-white/40 text-xs">8 lists • Edited 2h ago</p>
+</div>
+</div>
+<button class="text-white/40 hover:text-white">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Nested Lists -->
+<div class="space-y-3">
+<!-- List Item -->
+<div class="bg-background-dark/50 border border-white/5 rounded-lg p-3 flex items-center justify-between group">
+<div class="flex items-center gap-3">
+<div class="size-2 rounded-full bg-primary shadow-sm shadow-primary/50"></div>
+<div>
+<p class="text-white text-sm font-medium">iPhone 15 Pro Keywords</p>
+<div class="flex gap-2 mt-1">
+<span class="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded">42 Keywords</span>
+<span class="text-[10px] bg-white/5 text-white/60 px-1.5 py-0.5 rounded">1.2M Vol</span>
+</div>
+</div>
+</div>
+<div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 text-white/40 hover:text-primary"><span class="material-symbols-outlined text-sm">content_copy</span></button>
+<button class="p-1 text-white/40 hover:text-primary"><span class="material-symbols-outlined text-sm">ios_share</span></button>
+<button class="p-1 text-white/40 hover:text-red-500"><span class="material-symbols-outlined text-sm">delete</span></button>
+</div>
+</div>
+<!-- List Item -->
+<div class="bg-background-dark/50 border border-white/5 rounded-lg p-3 flex items-center justify-between group">
+<div class="flex items-center gap-3">
+<div class="size-2 rounded-full bg-yellow-500"></div>
+<div>
+<p class="text-white text-sm font-medium">Smart Home Setup 2024</p>
+<div class="flex gap-2 mt-1">
+<span class="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded">15 Keywords</span>
+<span class="text-[10px] bg-white/5 text-white/60 px-1.5 py-0.5 rounded">340k Vol</span>
+</div>
+</div>
+</div>
+<div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 text-white/40 hover:text-primary"><span class="material-symbols-outlined text-sm">content_copy</span></button>
+<button class="p-1 text-white/40 hover:text-primary"><span class="material-symbols-outlined text-sm">ios_share</span></button>
+<button class="p-1 text-white/40 hover:text-red-500"><span class="material-symbols-outlined text-sm">delete</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Folder Card 2 (Collapsed Style) -->
+<div class="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="bg-white/10 rounded-lg p-2 text-white/60">
+<span class="material-symbols-outlined">folder</span>
+</div>
+<div>
+<h3 class="text-white font-bold">TikTok Trends</h3>
+<p class="text-white/40 text-xs">4 lists • Edited 3d ago</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-white/40">unfold_more</span>
+</div>
+</div>
+<!-- Folder Card 3 (Collapsed Style) -->
+<div class="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="bg-white/10 rounded-lg p-2 text-white/60">
+<span class="material-symbols-outlined">folder</span>
+</div>
+<div>
+<h3 class="text-white font-bold">Affiliate Blog Posts</h3>
+<p class="text-white/40 text-xs">2 lists • Edited 1w ago</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-white/40">unfold_more</span>
+</div>
+</div>
+</section>
+<!-- Export Quick Actions -->
+<section class="mt-8">
+<h2 class="text-white/90 text-sm font-semibold uppercase tracking-widest mb-4">Recent Export Activity</h2>
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-4">
+<div class="min-w-[140px] bg-primary/10 border border-primary/20 rounded-xl p-3">
+<span class="material-symbols-outlined text-primary mb-2">csv</span>
+<p class="text-white text-xs font-bold truncate">iPhone_List_Final.csv</p>
+<p class="text-white/40 text-[10px]">Today, 10:45 AM</p>
+</div>
+<div class="min-w-[140px] bg-white/5 border border-white/10 rounded-xl p-3">
+<span class="material-symbols-outlined text-white/40 mb-2">picture_as_pdf</span>
+<p class="text-white text-xs font-bold truncate">Tech_Report_May.pdf</p>
+<p class="text-white/40 text-[10px]">Yesterday</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button -->
+<button class="absolute bottom-24 right-6 size-14 bg-primary text-white rounded-full shadow-xl shadow-primary/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- Bottom Navigation -->
+<nav class="flex border-t border-primary/10 bg-background-dark/95 backdrop-blur-md px-4 pb-6 pt-2">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/40" href="#">
+<span class="material-symbols-outlined">search</span>
+<p class="text-[10px] font-medium">Search</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">folder</span>
+<p class="text-[10px] font-medium">Projects</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/40" href="#">
+<span class="material-symbols-outlined">insights</span>
+<p class="text-[10px] font-medium">Analytics</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/40" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-[10px] font-medium">Settings</p>
+</a>
+</nav>
+<!-- Context Menu Overlay (Simulated) -->
+<div class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end">
+<div class="bg-background-dark rounded-t-2xl p-6 space-y-4 animate-slide-up">
+<div class="w-12 h-1 bg-white/20 rounded-full mx-auto mb-2"></div>
+<h4 class="text-white font-bold text-center">Manage List</h4>
+<div class="space-y-2">
+<button class="w-full flex items-center gap-4 p-4 bg-white/5 rounded-xl text-white">
+<span class="material-symbols-outlined text-primary">content_copy</span>
+<span class="font-medium">Duplicate List</span>
+</button>
+<button class="w-full flex items-center gap-4 p-4 bg-white/5 rounded-xl text-white">
+<span class="material-symbols-outlined text-primary">ios_share</span>
+<span class="font-medium">Export as CSV/PDF</span>
+</button>
+<button class="w-full flex items-center gap-4 p-4 bg-red-500/10 rounded-xl text-red-500 border border-red-500/20">
+<span class="material-symbols-outlined">delete</span>
+<span class="font-medium">Delete Permanently</span>
+</button>
+</div>
+<button class="w-full p-4 text-white/40 font-medium">Cancel</button>
+</div>
+</div>
+</div>
+</body></html>
