@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Search, TrendingUp, DollarSign, ExternalLink, Save, ArrowDown, Database, Check, X, FileText, Sparkles, TrendingDown, Minus, Shield, Globe, Zap, Download, FileJson, FileCode, Copy, Share2 } from 'lucide-react';
+import { Search, TrendingUp, DollarSign, ExternalLink, Save, ArrowDown, Database, Check, X, FileText, Sparkles, TrendingDown, Minus, Shield, Globe, Zap, Download, FileJson, FileCode, Copy, Share2, Clock, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchStore, KeywordResult } from '@/store/searchStore';
 import { useCreditStore } from '@/store/creditStore';
@@ -11,12 +11,23 @@ import { useMounted } from '@/hooks/use-mounted';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import BriefModal from '@/components/BriefModal';
+import { useToast } from '@/components/Toast';
 
+
+const SUGGESTED_KEYWORDS = [
+    { label: 'AI Side Hustles', mode: 'web' as const },
+    { label: 'ChatGPT Prompts', mode: 'web' as const },
+    { label: 'Passive Income 2026', mode: 'web' as const },
+    { label: 'YouTube Automation', mode: 'video' as const },
+    { label: 'Faceless YouTube Channel', mode: 'video' as const },
+    { label: 'Digital Products to Sell', mode: 'web' as const },
+];
 
 export default function Dashboard() {
-    const { query, setQuery, results, setResults, isLoading, setIsLoading } = useSearchStore();
+    const { query, setQuery, results, setResults, isLoading, setIsLoading, history, addToHistory } = useSearchStore();
     const { credits, useCredits } = useCreditStore();
     const { saveKeyword, savedKeywords, fetchKeywords: fetchSaved } = useProjectStore();
+    const { success, error: toastError, info } = useToast();
 
     const [searchInput, setSearchInput] = useState(query);
     const [selectedKeyword, setSelectedKeyword] = useState<KeywordResult | null>(null);
@@ -38,7 +49,7 @@ export default function Dashboard() {
     const fetchKeywords = useCallback(async (kw: string, currentMode = mode) => {
         if (!kw) return;
         if (credits <= 0) {
-            alert("Insufficient credits. Please upgrade.");
+            toastError('No credits remaining. Please upgrade your plan.');
             return;
         }
 
@@ -54,15 +65,17 @@ export default function Dashboard() {
             if (resp.ok) {
                 setResults(data);
                 useCredits(1);
+                addToHistory({ query: kw, mode: currentMode, timestamp: Date.now(), resultCount: data.length });
             } else {
-                alert(`Error: ${data.error}`);
+                toastError(`Analysis failed: ${data.error}`);
             }
         } catch (err) {
             console.error(err);
+            toastError('Network error. Please try again.');
         } finally {
             setIsLoading(false);
         }
-    }, [credits, setIsLoading, setResults, useCredits, mode]);
+    }, [credits, setIsLoading, setResults, useCredits, mode, addToHistory, toastError]);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -77,9 +90,10 @@ export default function Dashboard() {
             for (const item of results) {
                 await saveKeyword(item);
             }
-            alert("All intelligence synced successfully!");
+            success(`${results.length} keywords synced to your projects!`);
         } catch (err) {
             console.error(err);
+            toastError('Failed to save keywords. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -103,15 +117,15 @@ export default function Dashboard() {
         const link = document.createElement("a");
         link.style.display = 'none';
         link.href = url;
-        link.download = `stitch-export-${query || 'research'}.csv`;
+        link.download = `creatorkeyword-pro-${query || 'research'}.csv`;
         document.body.appendChild(link);
         link.click();
 
-        // Brief delay before cleanup and UI update to prevent extension collision
         setTimeout(() => {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
             setShowExportMenu(false);
+            success('CSV exported successfully!');
         }, 100);
     };
 
@@ -130,6 +144,7 @@ export default function Dashboard() {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
             setShowExportMenu(false);
+            success('JSON exported successfully!');
         }, 100);
     };
 
@@ -137,23 +152,24 @@ export default function Dashboard() {
         const text = results.map(r => `| ${r.keyword} | ${r.searchVolume} | ${r.competitionScore}% | ${r.intentType} |`).join('\n');
         const table = `### Keyword Intelligence: ${query}\n\n| Keyword | Volume | Difficulty | Intent |\n|---|---|---|---|\n${text}\n\n*Generated by CreatorKeyword Pro Export Engine*`;
 
-        // Use a more stable copy method
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(table).then(() => {
-                alert("Markdown Table Copied for Notion!");
+        const doCopy = (str: string) => {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(str).then(() => {
+                    success('Markdown table copied — ready to paste into Notion!');
+                    setShowExportMenu(false);
+                });
+            } else {
+                const textArea = document.createElement('textarea');
+                textArea.value = str;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                success('Markdown table copied!');
                 setShowExportMenu(false);
-            });
-        } else {
-            // Fallback for older browsers or insecure contexts
-            const textArea = document.createElement("textarea");
-            textArea.value = table;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            alert("Markdown Table Copied!");
-            setShowExportMenu(false);
-        }
+            }
+        };
+        doCopy(table);
     };
 
 
@@ -288,23 +304,87 @@ export default function Dashboard() {
                         ))
                     ) : (
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
-                            className="text-center py-32 rounded-[40px] border border-dashed border-white/10"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="space-y-6"
                         >
-                            <div className="bg-primary/20 size-20 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-12 transition-transform shadow-2xl shadow-primary/10">
-                                {mode === 'competitor' ? <Shield className="text-primary size-10" /> : <Sparkles className="text-primary size-10" />}
+                            {/* Hero empty state */}
+                            <div
+                                style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                                className="text-center py-16 rounded-[40px] border border-dashed border-white/10"
+                            >
+                                <div className="bg-primary/20 size-20 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-12 shadow-2xl shadow-primary/10">
+                                    {mode === 'competitor' ? <Shield className="text-primary size-10" /> : <Sparkles className="text-primary size-10" />}
+                                </div>
+                                <h3 className="text-2xl font-black text-white mb-3 tracking-tight">
+                                    {mode === 'competitor' ? 'Perform Competitive Pulse' : 'Ready for Alpha?'}
+                                </h3>
+                                <p className="text-slate-500 max-w-sm mx-auto font-medium text-sm px-4">
+                                    {mode === 'competitor'
+                                        ? 'Enter a competitor URL to reveal hidden keyword opportunities they are actively ranking for.'
+                                        : 'Enter a keyword below or pick a suggestion to generate market-leading intelligence.'}
+                                </p>
                             </div>
-                            <h3 className="text-2xl font-black text-white mb-3 tracking-tight">
-                                {mode === 'competitor' ? 'Perform Competitive Pulse' : 'Ready for Alpha?'}
-                            </h3>
-                            <p className="text-slate-500 max-w-sm mx-auto font-medium">
-                                {mode === 'competitor' ?
-                                    'Enter a competitor URL to scrape their site DNA and reveal hidden keyword opportunities they are actively ranking for.' :
-                                    'Select a mode and enter a keyword to generate market-leading intelligence for your next project.'
-                                }
-                            </p>
+
+                            {/* Suggested starter keywords */}
+                            {mode !== 'competitor' && (
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-3 px-1">🔥 Trending Starters</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {SUGGESTED_KEYWORDS.map((s) => (
+                                            <button
+                                                key={s.label}
+                                                onClick={() => {
+                                                    setSearchInput(s.label);
+                                                    setQuery(s.label);
+                                                    setMode(s.mode);
+                                                    fetchKeywords(s.label, s.mode);
+                                                }}
+                                                className="flex items-center gap-1.5 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm font-bold text-slate-300 hover:bg-primary/10 hover:border-primary/30 hover:text-white transition-all"
+                                            >
+                                                <ChevronRight size={12} className="text-primary" />
+                                                {s.label}
+                                                {s.mode === 'video' && <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-black uppercase tracking-wider">Video</span>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Recent search history */}
+                            {history.length > 0 && (
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-3 px-1 flex items-center gap-2">
+                                        <Clock size={11} /> Recent Searches
+                                    </p>
+                                    <div className="space-y-1">
+                                        {history.slice(0, 5).map((h) => (
+                                            <button
+                                                key={`${h.query}-${h.timestamp}`}
+                                                onClick={() => {
+                                                    setSearchInput(h.query);
+                                                    setQuery(h.query);
+                                                    setMode(h.mode);
+                                                    fetchKeywords(h.query, h.mode);
+                                                }}
+                                                className="w-full flex items-center justify-between px-4 py-3 bg-white/3 border border-white/5 rounded-2xl hover:bg-white/8 hover:border-white/10 transition-all group"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <Clock size={13} className="text-slate-600 shrink-0" />
+                                                    <span className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">{h.query}</span>
+                                                    <span className={cn(
+                                                        'text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider',
+                                                        h.mode === 'video' ? 'bg-purple-500/10 text-purple-400' :
+                                                            h.mode === 'competitor' ? 'bg-primary/10 text-primary' :
+                                                                'bg-slate-500/10 text-slate-500'
+                                                    )}>{h.mode}</span>
+                                                </div>
+                                                <span className="text-[10px] text-slate-600 font-bold">{h.resultCount} results</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </motion.div>
                     )}
                 </div>

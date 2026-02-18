@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface KeywordResult {
     keyword: string;
@@ -12,10 +13,18 @@ export interface KeywordResult {
     cluster?: string;
 }
 
+export interface SearchHistoryEntry {
+    query: string;
+    mode: 'web' | 'video' | 'competitor';
+    timestamp: number;
+    resultCount: number;
+}
+
 interface SearchState {
     query: string;
     results: KeywordResult[];
     isLoading: boolean;
+    history: SearchHistoryEntry[];
     filters: {
         platform: string;
         difficulty: string;
@@ -25,22 +34,46 @@ interface SearchState {
     setResults: (results: KeywordResult[]) => void;
     setIsLoading: (isLoading: boolean) => void;
     setFilter: (key: string, value: string) => void;
+    addToHistory: (entry: SearchHistoryEntry) => void;
+    clearHistory: () => void;
 }
 
-export const useSearchStore = create<SearchState>((set) => ({
-    query: '',
-    results: [],
-    isLoading: false,
-    filters: {
-        platform: 'Google',
-        difficulty: 'All',
-        intent: 'All',
-    },
-    setQuery: (query) => set({ query }),
-    setResults: (results) => set({ results }),
-    setIsLoading: (isLoading) => set({ isLoading }),
-    setFilter: (key, value) =>
-        set((state) => ({
-            filters: { ...state.filters, [key]: value }
-        })),
-}));
+export const useSearchStore = create<SearchState>()(
+    persist(
+        (set) => ({
+            query: '',
+            results: [],
+            isLoading: false,
+            history: [],
+            filters: {
+                platform: 'Google',
+                difficulty: 'All',
+                intent: 'All',
+            },
+            setQuery: (query) => set({ query }),
+            setResults: (results) => set({ results }),
+            setIsLoading: (isLoading) => set({ isLoading }),
+            setFilter: (key, value) =>
+                set((state) => ({
+                    filters: { ...state.filters, [key]: value }
+                })),
+            addToHistory: (entry) =>
+                set((state) => {
+                    // Deduplicate by query+mode, keep newest, cap at 10
+                    const filtered = state.history.filter(
+                        h => !(h.query === entry.query && h.mode === entry.mode)
+                    );
+                    return { history: [entry, ...filtered].slice(0, 10) };
+                }),
+            clearHistory: () => set({ history: [] }),
+        }),
+        {
+            name: 'creatorkeyword-search',
+            // Only persist history and last query — not results (too large)
+            partialize: (state) => ({
+                query: state.query,
+                history: state.history,
+            }),
+        }
+    )
+);
