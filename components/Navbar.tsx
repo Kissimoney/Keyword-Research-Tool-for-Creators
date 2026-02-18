@@ -38,8 +38,8 @@ export default function Navbar() {
                         <BarChart3 className="text-white size-5" />
                     </div>
                     <div className="flex flex-col">
-                        <h1 className="font-black text-xl tracking-tighter text-white leading-none">Stitch</h1>
-                        <span className="text-[8px] font-black text-primary uppercase tracking-[0.3em] mt-0.5">Intelligence</span>
+                        <h1 className="font-black text-xl tracking-tighter text-white leading-none">CreatorKeyword</h1>
+                        <span className="text-[8px] font-black text-primary uppercase tracking-[0.3em] mt-0.5">Pro</span>
                     </div>
                 </Link>
 

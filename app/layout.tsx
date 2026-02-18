@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "KeywordTool - Profitable Keywords in Seconds",
+  title: "CreatorKeyword Pro - Profitable Keywords in Seconds",
   description: "Discover high-volume, low-competition keywords for your next project.",
   other: {
     "apple-mobile-web-app-capable": "yes",
