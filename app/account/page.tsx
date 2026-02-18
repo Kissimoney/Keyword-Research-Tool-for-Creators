@@ -67,7 +67,9 @@ export default function AccountPage() {
                     <div className="size-20 sm:size-32 rounded-[28px] sm:rounded-[40px] bg-primary/10 border border-primary/20 p-1 flex items-center justify-center relative group shrink-0">
                         <div className="absolute inset-0 bg-primary/20 rounded-[28px] sm:rounded-[40px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="size-full rounded-[24px] sm:rounded-[36px] bg-surface flex items-center justify-center border border-white/5 overflow-hidden">
-                            <User className="text-primary size-8 sm:size-12" />
+                            <span className="text-3xl sm:text-5xl font-black text-primary select-none">
+                                {(user.email?.[0] ?? '?').toUpperCase()}
+                            </span>
                         </div>
                         <div className="absolute -bottom-2 -right-2 size-8 sm:size-10 rounded-xl sm:rounded-2xl bg-primary flex items-center justify-center shadow-lg border-4 border-background">
                             <Crown className="text-white size-4 sm:size-5" />
@@ -126,8 +128,18 @@ export default function AccountPage() {
 
                         <div className="space-y-8">
                             <DetailRow icon={<Mail className="text-slate-500" />} label="Email" value={user.email} />
-                            <DetailRow icon={<Shield className="text-slate-500" />} label="Security" value="2FA Enabled" />
-                            <DetailRow icon={<Bell className="text-slate-500" />} label="Notifications" value="Enabled" />
+                            <DetailRow
+                                icon={<Shield className="text-slate-500" />}
+                                label="Auth Provider"
+                                value={user.app_metadata?.provider === 'google' ? 'Google OAuth' : 'Email & Password'}
+                            />
+                            <DetailRow
+                                icon={<Bell className="text-slate-500" />}
+                                label="Joined"
+                                value={user.created_at
+                                    ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                                    : 'Recently'}
+                            />
                         </div>
                     </div>
                 </div>

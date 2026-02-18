@@ -3,12 +3,19 @@
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Database, User, AlertTriangle } from 'lucide-react';
+import { BarChart3, Database, User, AlertTriangle, Search, Folder, CreditCard } from 'lucide-react';
 import { useCreditStore } from '@/store/creditStore';
 import { useMounted } from '@/hooks/use-mounted';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
+
+const NAV_LINKS = [
+    { label: 'Research', href: '/dashboard', icon: Search },
+    { label: 'Projects', href: '/projects', icon: Folder },
+    { label: 'Pricing', href: '/pricing', icon: CreditCard },
+];
 
 const LOW_CREDIT_THRESHOLD = 5;
 
@@ -57,13 +64,42 @@ export default function Navbar() {
                     </div>
                 </Link>
 
+                {/* Desktop nav links */}
+                <nav className="hidden md:flex items-center gap-1">
+                    {NAV_LINKS.map((link) => {
+                        const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
+                        return (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className={cn(
+                                    'relative px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2',
+                                    isActive
+                                        ? 'text-primary bg-primary/10'
+                                        : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                                )}
+                            >
+                                {isActive && (
+                                    <motion.span
+                                        layoutId="nav-active"
+                                        className="absolute inset-0 rounded-xl bg-primary/10 border border-primary/20"
+                                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                                    />
+                                )}
+                                <link.icon size={13} className="relative z-10" />
+                                <span className="relative z-10">{link.label}</span>
+                            </Link>
+                        );
+                    })}
+                </nav>
+
                 <div className="flex items-center gap-4">
                     {/* Credit pill */}
                     <Link
                         href="/pricing"
                         className={`relative flex items-center gap-2 px-4 py-2 rounded-full border transition-all group ${isLow
-                                ? 'bg-red-500/10 border-red-500/30 hover:bg-red-500/20'
-                                : 'bg-primary/10 border-primary/20 hover:bg-primary/20'
+                            ? 'bg-red-500/10 border-red-500/30 hover:bg-red-500/20'
+                            : 'bg-primary/10 border-primary/20 hover:bg-primary/20'
                             }`}
                     >
                         {isLow ? (
