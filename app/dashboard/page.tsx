@@ -93,8 +93,8 @@ export default function Dashboard() {
         }
     }, [credits, setIsLoading, setResults, useCredits, mode, addToHistory, toastError]);
 
-    const handleSearchSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSearchSubmit = (e?: React.FormEvent) => {
+        e?.preventDefault();
         if (!searchInput.trim()) return;
         setQuery(searchInput);
         fetchKeywords(searchInput);
@@ -189,9 +189,11 @@ export default function Dashboard() {
     };
 
 
+    const hasFetchedRef = useRef(false);
     useEffect(() => {
-        if (mounted && results.length === 0 && query) {
-            fetchKeywords(query);
+        if (mounted && !hasFetchedRef.current && query) {
+            hasFetchedRef.current = true;
+            if (results.length === 0) fetchKeywords(query);
             fetchSaved();
         }
     }, [mounted, query, results.length, fetchKeywords, fetchSaved]);
@@ -276,7 +278,7 @@ export default function Dashboard() {
                         </div>
 
                         <button
-                            onClick={handleSearchSubmit}
+                            onClick={() => handleSearchSubmit()}
                             disabled={isLoading}
                             className="flex-1 py-3 sm:py-4 bg-primary text-white font-black rounded-xl sm:rounded-2xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
                         >
@@ -574,6 +576,17 @@ function KeywordRow({ data, isSaved, onSave, onClick, mode }: { data: KeywordRes
         setSaving(false);
     };
 
+    // Deterministic sparkline path seeded from the keyword string
+    const sparklinePath = useMemo(() => {
+        let seed = data.keyword.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        const rand = () => { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return (seed >>> 0) / 0xffffffff; };
+        const points = Array.from({ length: 8 }, (_, i) => ({
+            x: i * 14.2,
+            y: 20 + (Math.sin(i * 0.8) * 12) + (rand() * 8 - 4)
+        }));
+        return `M ${points[0].x} ${points[0].y} ` + points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
+    }, [data.keyword]);
+
     return (
         <motion.div
             initial={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
@@ -692,14 +705,7 @@ function KeywordRow({ data, isSaved, onSave, onClick, mode }: { data: KeywordRes
                                 initial={{ pathLength: 0 }}
                                 animate={{ pathLength: 1 }}
                                 transition={{ duration: 1.5, ease: "easeInOut" }}
-                                d={useMemo(() => {
-                                    const points = Array.from({ length: 8 }, (_, i) => ({
-                                        x: i * 14.2,
-                                        y: 20 + (Math.sin(i * 0.8) * 12) + (Math.random() * 8)
-                                    }));
-                                    return `M ${points[0].x} ${points[0].y} ` +
-                                        points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
-                                }, [])}
+                                d={sparklinePath}
                                 fill="none"
                                 stroke={data.trendDirection === 'up' ? "#00B140" : data.trendDirection === 'down' ? "#ef4444" : "#64748b"}
                                 strokeWidth="2.5"

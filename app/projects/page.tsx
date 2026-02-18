@@ -154,7 +154,7 @@ export default function ProjectsPage() {
                 <div>
                     <h1 className="text-4xl font-black text-white tracking-tight mb-2">My Projects</h1>
                     <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">
-                        {savedKeywords.length} Saved Keyword{savedKeywords.length !== 1 ? 's' : ''} &amp; Strategies
+                        {savedKeywords.length} Saved Keyword{savedKeywords.length !== 1 ? 's' : ''} & Strategies
                     </p>
                 </div>
                 <div className="flex gap-3">

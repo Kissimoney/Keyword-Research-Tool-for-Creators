@@ -11,8 +11,26 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "CreatorKeyword Pro - Profitable Keywords in Seconds",
-  description: "Discover high-volume, low-competition keywords for your next project.",
+  title: "CreatorKeyword Pro — Profitable Keywords in Seconds",
+  description: "Discover high-volume, low-competition keywords for YouTube, TikTok, and web content. AI-powered keyword intelligence for creators who demand the best data.",
+  metadataBase: new URL("https://creatorkeyword.pro"),
+  openGraph: {
+    title: "CreatorKeyword Pro — Profitable Keywords in Seconds",
+    description: "AI-powered keyword intelligence for creators. Find high-volume, low-competition keywords instantly.",
+    url: "https://creatorkeyword.pro",
+    siteName: "CreatorKeyword Pro",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CreatorKeyword Pro — Profitable Keywords in Seconds",
+    description: "AI-powered keyword intelligence for creators. Find high-volume, low-competition keywords instantly.",
+    creator: "@creatorkeyword",
+  },
+  alternates: {
+    canonical: "https://creatorkeyword.pro",
+  },
   other: {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
