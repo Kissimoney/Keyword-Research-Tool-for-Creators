@@ -61,7 +61,7 @@ export default function ProjectsPage() {
 
 
     return (
-        <div className="min-h-screen px-4 py-12 max-w-7xl mx-auto">
+        <div className="min-h-screen px-4 pt-6 sm:pt-12 pb-32 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
                 <div>
                     <h1 className="text-4xl font-black text-white tracking-tight mb-2">My Projects</h1>
@@ -87,7 +87,7 @@ export default function ProjectsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {savedKeywords.map((kw) => (
                         <div key={kw.keyword} className="bg-surface-dark border border-white/5 p-6 rounded-[32px] hover:border-primary/30 transition-all group relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute top-0 right-0 p-4 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={() => removeKeyword(kw.keyword)}
                                     className="text-slate-600 hover:text-red-500 transition-colors"

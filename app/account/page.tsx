@@ -54,36 +54,36 @@ export default function AccountPage() {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-background pt-12 pb-24 px-4 overflow-hidden relative font-sans">
+        <div className="min-h-screen bg-background pt-6 sm:pt-12 pb-32 px-4 overflow-hidden relative font-sans">
             {/* Background Glow */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -mr-64 -mt-64" />
 
             <div className="max-w-5xl mx-auto space-y-12 relative z-10">
                 {/* Header Profile */}
-                <header className="flex items-center gap-8">
-                    <div className="size-32 rounded-[40px] bg-primary/10 border border-primary/20 p-1 flex items-center justify-center relative group">
-                        <div className="absolute inset-0 bg-primary/20 rounded-[40px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="size-full rounded-[36px] bg-surface flex items-center justify-center border border-white/5 overflow-hidden">
-                            <User className="text-primary size-12" />
+                <header className="flex items-center gap-5 sm:gap-8">
+                    <div className="size-20 sm:size-32 rounded-[28px] sm:rounded-[40px] bg-primary/10 border border-primary/20 p-1 flex items-center justify-center relative group shrink-0">
+                        <div className="absolute inset-0 bg-primary/20 rounded-[28px] sm:rounded-[40px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="size-full rounded-[24px] sm:rounded-[36px] bg-surface flex items-center justify-center border border-white/5 overflow-hidden">
+                            <User className="text-primary size-8 sm:size-12" />
                         </div>
-                        <div className="absolute -bottom-2 -right-2 size-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg border-4 border-background">
-                            <Crown className="text-white size-5" />
+                        <div className="absolute -bottom-2 -right-2 size-8 sm:size-10 rounded-xl sm:rounded-2xl bg-primary flex items-center justify-center shadow-lg border-4 border-background">
+                            <Crown className="text-white size-4 sm:size-5" />
                         </div>
                     </div>
-                    <div>
-                        <h1 className="text-5xl font-black text-white tracking-tighter mb-2">
+                    <div className="min-w-0">
+                        <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tighter mb-1 sm:mb-2 truncate">
                             {user.email?.split('@')[0] || 'Explorer'}
                         </h1>
                         <div className="flex items-center gap-3">
-                            <span className="text-primary text-xs font-black uppercase tracking-[0.2em]">Pro Member Since Feb 2026</span>
+                            <span className="text-primary text-[10px] sm:text-xs font-black uppercase tracking-[0.2em]">Pro Member Since Feb 2026</span>
                         </div>
                     </div>
                 </header>
 
                 {/* Account Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
                     {/* Active Plan Card */}
-                    <div className="bg-surface-dark border border-white/10 rounded-[40px] p-10 relative overflow-hidden group">
+                    <div className="bg-surface-dark border border-white/10 rounded-[28px] sm:rounded-[40px] p-6 sm:p-10 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors" />
 
                         <div className="flex items-center justify-between mb-10">
@@ -113,7 +113,7 @@ export default function AccountPage() {
                     </div>
 
                     {/* Account Details Card */}
-                    <div className="bg-surface-dark border border-white/10 rounded-[40px] p-10 relative overflow-hidden group">
+                    <div className="bg-surface-dark border border-white/10 rounded-[28px] sm:rounded-[40px] p-6 sm:p-10 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-colors" />
                         <h3 className="text-2xl font-black text-white tracking-tight mb-8">Account Details</h3>
 
@@ -128,7 +128,7 @@ export default function AccountPage() {
                 {/* Settings Section */}
                 <div className="space-y-6">
                     <h3 className="text-2xl font-black text-white tracking-tight px-4">Settings</h3>
-                    <div className="bg-surface-dark border border-white/10 rounded-[40px] overflow-hidden flex flex-col divide-y divide-white/5">
+                    <div className="bg-surface-dark border border-white/10 rounded-[28px] sm:rounded-[40px] overflow-hidden flex flex-col divide-y divide-white/5">
                         <Link href="/account/settings" className="block">
                             <SettingsItem icon={<Settings />} label="General Settings" />
                         </Link>
@@ -170,13 +170,13 @@ function SettingsItem({ icon, label, className = "", onClick }: { icon: any, lab
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center justify-between p-8 hover:bg-white/5 transition-all group ${className}`}
+            className={`w-full flex items-center justify-between p-5 sm:p-8 hover:bg-white/5 transition-all group ${className}`}
         >
             <div className="flex items-center gap-6">
                 <div className="text-slate-500 group-hover:text-primary transition-colors group-hover:scale-110 duration-500">
                     {icon}
                 </div>
-                <span className="font-black tracking-tight text-lg">{label}</span>
+                <span className="font-black tracking-tight text-base sm:text-lg">{label}</span>
             </div>
             <ChevronRight className="text-slate-600 group-hover:text-white transition-all group-hover:translate-x-1" size={20} />
         </button>
