@@ -2,17 +2,34 @@ import { create } from 'zustand';
 import { KeywordResult } from './searchStore';
 import { supabase } from '@/lib/supabase';
 
+export interface ContentProject {
+    id: string;
+    keyword: string;
+    brief: string | null;
+    draft: string | null;
+    format: string;
+    status: 'draft' | 'outlining' | 'published' | 'archived';
+    created_at: string;
+}
+
 interface ProjectState {
     savedKeywords: KeywordResult[];
+    contentProjects: ContentProject[];
     isLoading: boolean;
     fetchKeywords: () => Promise<void>;
     saveKeyword: (keyword: KeywordResult) => Promise<void>;
     removeKeyword: (keywordString: string) => Promise<void>;
+
+    // Content Project Actions
+    fetchProjects: () => Promise<void>;
+    removeProject: (id: string) => Promise<void>;
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
     savedKeywords: [],
+    contentProjects: [],
     isLoading: false,
+
     fetchKeywords: async () => {
         set({ isLoading: true });
         const { data, error } = await supabase
@@ -36,10 +53,9 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         }
         set({ isLoading: false });
     },
+
     saveKeyword: async (keyword) => {
         if (get().savedKeywords.some(k => k.keyword === keyword.keyword)) return;
-
-        // Resolve the authenticated user's email for the RLS-scoped insert
         const { data: { user } } = await supabase.auth.getUser();
         if (!user?.email) return;
 
@@ -52,13 +68,14 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
             trend_direction: keyword.trendDirection,
             strategy: keyword.strategy,
             cluster: keyword.cluster,
-            user_email: user.email,        // ← required by RLS policy
+            user_email: user.email,
         }]);
 
         if (!error) {
             set((state) => ({ savedKeywords: [keyword, ...state.savedKeywords] }));
         }
     },
+
     removeKeyword: async (keywordString) => {
         const { error } = await supabase
             .from('saved_keywords')
@@ -71,4 +88,30 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
             }));
         }
     },
+
+    fetchProjects: async () => {
+        set({ isLoading: true });
+        const { data, error } = await supabase
+            .from('content_projects')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (data) {
+            set({ contentProjects: data });
+        }
+        set({ isLoading: false });
+    },
+
+    removeProject: async (id) => {
+        const { error } = await supabase
+            .from('content_projects')
+            .delete()
+            .eq('id', id);
+
+        if (!error) {
+            set((state) => ({
+                contentProjects: state.contentProjects.filter(p => p.id !== id)
+            }));
+        }
+    }
 }));

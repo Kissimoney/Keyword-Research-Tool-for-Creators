@@ -57,7 +57,7 @@ Use professional, aggressive, strategic language. Format in clean Markdown with 
 `.trim();
 
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
         return NextResponse.json({ plan: text }, { headers: HEADERS });

@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Zap, Sparkles, Copy, Check as CheckIcon, FileText, ChevronRight, Database, Globe } from 'lucide-react';
 import { KeywordResult } from '@/store/searchStore';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/Toast';
 
 interface Section {
     emoji: string;
@@ -30,7 +32,6 @@ function parseSections(markdown: string): Section[] {
         const lines = section.trim().split('\n').filter(l => l.trim());
         const titleLine = lines[0]?.trim() ?? '';
 
-        // Extract leading emoji (unicode ranges for common emojis)
         const emojiMatch = titleLine.match(/^([\u{1F300}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|🚀|🔥|🛠️|💸|📈|🎯|⚡|💡|🏆|📊|🔑)/u);
         const emoji = emojiMatch ? emojiMatch[0] : '◆';
         const title = titleLine.replace(/^[^\s]+\s*/, '').replace(/[*#]/g, '').trim();
@@ -39,13 +40,11 @@ function parseSections(markdown: string): Section[] {
         lines.slice(1).forEach(line => {
             const cleaned = line.replace(/^[\s*\-•]+/, '').trim();
             if (!cleaned) return;
-            // Bold label pattern: **Label:** detail  or  **Label**: detail
             const boldMatch = cleaned.match(/^\*{1,2}([^*:]+)\*{0,2}:(.+)$/);
             if (boldMatch) {
                 bullets.push({ label: boldMatch[1].trim(), detail: boldMatch[2].trim() });
                 return;
             }
-            // Plain colon split (short label)
             const colonIdx = cleaned.indexOf(':');
             if (colonIdx > 0 && colonIdx < 55) {
                 const label = cleaned.slice(0, colonIdx).replace(/\*+/g, '').trim();
@@ -73,6 +72,8 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
     const [draftFormat, setDraftFormat] = useState<'blog' | 'video' | 'thread'>('blog');
     const [isDrafting, setIsDrafting] = useState(false);
     const [showDraft, setShowDraft] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const { success, error } = useToast();
 
     useEffect(() => {
         const fetchBrief = async () => {
@@ -133,10 +134,34 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
         }
     };
 
+    const handleSaveToProjects = async () => {
+        setIsSaving(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Not authenticated');
+
+            const { error: saveErr } = await supabase.from('content_projects').insert({
+                user_id: user.id,
+                keyword: keyword.keyword,
+                brief,
+                draft,
+                format: draftFormat,
+                status: draft ? 'draft' : 'outlining'
+            });
+
+            if (saveErr) throw saveErr;
+            success('Saved to your projects workspace!');
+        } catch (err: any) {
+            console.error(err);
+            error('Save failed: ' + err.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleCopy = () => {
         const text = showDraft ? draft : (fullPlan ?? brief);
         if (!text) return;
-        // Preserving markdown for Notion/Obsidian/Markdown apps
         navigator.clipboard.writeText(text).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
@@ -164,14 +189,11 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                 style={{ background: '#0a1628' }}
                 onClick={e => e.stopPropagation()}
             >
-                {/* ── HEADER ── */}
                 <div className="shrink-0 px-5 pt-4 pb-4 sm:px-8 sm:pt-7 sm:pb-6 border-b border-white/5" style={{ background: '#0d1e35' }}>
-                    {/* Mobile drag handle */}
                     <div className="w-10 h-1 rounded-full mx-auto mb-4 sm:hidden" style={{ background: 'rgba(255,255,255,0.15)' }} />
 
                     <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                            {/* Badge */}
                             <div className="flex items-center gap-2 mb-2.5">
                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border"
                                     style={{ background: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.2)' }}>
@@ -182,12 +204,10 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                                 </span>
                             </div>
 
-                            {/* Keyword title */}
                             <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight leading-tight line-clamp-2 pr-2">
                                 {keyword.keyword}
                             </h2>
 
-                            {/* Meta pills */}
                             <div className="flex items-center gap-2 mt-2.5 flex-wrap">
                                 {[
                                     `Vol ${keyword.searchVolume.toLocaleString()}`,
@@ -202,7 +222,6 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                             </div>
                         </div>
 
-                        {/* Actions */}
                         <div className="flex items-center gap-2 shrink-0">
                             {activeContent && (
                                 <button
@@ -214,6 +233,15 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                                     <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
                                 </button>
                             )}
+                            <button
+                                onClick={handleSaveToProjects}
+                                disabled={isBusy || isSaving || !brief}
+                                className="p-2.5 rounded-2xl text-slate-400 hover:text-white transition-all flex items-center gap-2 pr-4 bg-white/5 border border-white/10"
+                                title="Save to Workspace"
+                            >
+                                <Database size={14} className={cn(isSaving && "animate-pulse")} />
+                                <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">{isSaving ? 'Saving...' : 'Save'}</span>
+                            </button>
                             {showDraft && (
                                 <button
                                     onClick={() => setShowDraft(false)}
@@ -233,10 +261,8 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                     </div>
                 </div>
 
-                {/* ── BODY ── */}
                 <div className="flex-1 overflow-y-auto overscroll-contain">
                     {isBusy ? (
-                        /* Loading state */
                         <div className="flex flex-col items-center justify-center h-full gap-6 text-center px-8">
                             <motion.div
                                 animate={{ rotate: 360 }}
@@ -256,7 +282,6 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                             </div>
                         </div>
                     ) : showDraft && draft ? (
-                        /* Draft Display */
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -273,7 +298,6 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                             </div>
                         </motion.div>
                     ) : sections.length > 0 ? (
-                        /* Sections */
                         <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                             {sections.map((section, idx) => (
                                 <motion.div
@@ -284,10 +308,8 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                                     className="rounded-[22px] overflow-hidden shadow-lg"
                                     style={{ background: '#0f2035', border: '1px solid rgba(255,255,255,0.07)' }}
                                 >
-                                    {/* Colour accent bar */}
                                     <div className={`h-[3px] w-full bg-gradient-to-r ${section.color.accent}`} />
 
-                                    {/* Section title */}
                                     <div className="px-4 sm:px-5 py-3.5 flex items-center gap-3">
                                         <div
                                             className={`size-9 sm:size-10 rounded-xl ${section.color.icon_bg} border flex items-center justify-center text-base sm:text-lg shrink-0`}
@@ -299,7 +321,6 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                                         </h3>
                                     </div>
 
-                                    {/* Bullet items */}
                                     <div className="px-3 sm:px-4 pb-4 space-y-2">
                                         {section.bullets.map((bullet, bIdx) => (
                                             <div
@@ -325,7 +346,6 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                                 </motion.div>
                             ))}
 
-                            {/* Attribution footer */}
                             <div className="flex items-center justify-center gap-2 py-4">
                                 <span className="size-1.5 rounded-full bg-primary animate-pulse" />
                                 <p className="text-[9px] font-black uppercase tracking-[0.25em]" style={{ color: 'rgba(255,255,255,0.2)' }}>
@@ -341,7 +361,6 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                     )}
                 </div>
 
-                {/* ── FOOTER CTA ── */}
                 <div className="shrink-0 p-4 sm:p-6 border-t border-white/5 space-y-4" style={{ background: '#0d1e35' }}>
                     <div className="flex items-center gap-2 p-1 bg-black/20 rounded-2xl border border-white/5 overflow-hidden">
                         {(['blog', 'video', 'thread'] as const).map(fmt => (

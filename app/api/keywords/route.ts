@@ -138,7 +138,7 @@ export async function POST(request: Request) {
     try {
         console.log(`[keywords] mode=${mode} keyword="${keyword}"`);
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         // Competitor mode: try to fetch site metadata first
         let contextInfo = '';
