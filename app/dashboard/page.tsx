@@ -209,7 +209,9 @@ export default function Dashboard() {
         link.click();
 
         setTimeout(() => {
-            document.body.removeChild(link);
+            if (link.parentNode === document.body) {
+                document.body.removeChild(link);
+            }
             URL.revokeObjectURL(url);
             setShowExportMenu(false);
             success('CSV exported successfully!');
@@ -228,7 +230,9 @@ export default function Dashboard() {
         link.click();
 
         setTimeout(() => {
-            document.body.removeChild(link);
+            if (link.parentNode === document.body) {
+                document.body.removeChild(link);
+            }
             URL.revokeObjectURL(url);
             setShowExportMenu(false);
             success('JSON exported successfully!');
@@ -251,7 +255,9 @@ export default function Dashboard() {
                 document.body.appendChild(textArea);
                 textArea.select();
                 document.execCommand('copy');
-                document.body.removeChild(textArea);
+                if (textArea.parentNode === document.body) {
+                    document.body.removeChild(textArea);
+                }
                 success('Markdown table copied!');
                 setShowExportMenu(false);
             }
