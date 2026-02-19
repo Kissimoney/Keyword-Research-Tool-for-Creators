@@ -39,6 +39,10 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     saveKeyword: async (keyword) => {
         if (get().savedKeywords.some(k => k.keyword === keyword.keyword)) return;
 
+        // Resolve the authenticated user's email for the RLS-scoped insert
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.email) return;
+
         const { error } = await supabase.from('saved_keywords').insert([{
             keyword: keyword.keyword,
             search_volume: keyword.searchVolume,
@@ -47,7 +51,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
             intent_type: keyword.intentType,
             trend_direction: keyword.trendDirection,
             strategy: keyword.strategy,
-            cluster: keyword.cluster
+            cluster: keyword.cluster,
+            user_email: user.email,        // ← required by RLS policy
         }]);
 
         if (!error) {
