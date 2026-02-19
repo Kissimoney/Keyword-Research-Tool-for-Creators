@@ -655,10 +655,10 @@ export default function Dashboard() {
                                             {groupHistoryByTime(history).map((group: GroupedHistory) => (
                                                 <div key={group.title} className="space-y-3">
                                                     <div className="flex items-center justify-between px-1">
-                                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                                                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2">
                                                             <div className="size-1 rounded-full bg-primary/40" />
                                                             {group.title}
-                                                        </p>
+                                                        </div>
                                                         <button
                                                             onClick={() => handleSessionRecap(group.title, group.items)}
                                                             disabled={isRecapping}
@@ -670,7 +670,7 @@ export default function Dashboard() {
                                                     </div>
                                                     <div className="space-y-1">
                                                         {group.items.map((h: SearchHistoryEntry) => (
-                                                            <button
+                                                            <div
                                                                 key={`${h.query}-${h.timestamp}`}
                                                                 onClick={() => {
                                                                     setSearchInput(h.query);
@@ -682,7 +682,21 @@ export default function Dashboard() {
                                                                         fetchKeywords(h.query, h.mode);
                                                                     }
                                                                 }}
-                                                                className="w-full flex items-center justify-between px-4 py-3 bg-white/3 border border-white/5 rounded-2xl hover:bg-white/8 hover:border-white/10 transition-all group"
+                                                                role="button"
+                                                                tabIndex={0}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                                        setSearchInput(h.query);
+                                                                        setQuery(h.query);
+                                                                        setMode(h.mode);
+                                                                        if (h.results && h.results.length > 0) {
+                                                                            setResults(h.results);
+                                                                        } else {
+                                                                            fetchKeywords(h.query, h.mode);
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                className="w-full flex items-center justify-between px-4 py-3 bg-white/3 border border-white/5 rounded-2xl hover:bg-white/8 hover:border-white/10 transition-all group cursor-pointer"
                                                             >
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/5 group-hover:border-primary/30 transition-all">
@@ -710,7 +724,7 @@ export default function Dashboard() {
                                                                     </button>
                                                                     <ChevronRight size={14} className="text-slate-700 group-hover:text-primary transition-colors" />
                                                                 </div>
-                                                            </button>
+                                                            </div>
                                                         ))}
                                                     </div>
                                                 </div>
