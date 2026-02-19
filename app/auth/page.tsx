@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BarChart3, Mail, Lock, ArrowRight, Eye, EyeOff, Chrome } from 'lucide-react';
+import { BarChart3, Mail, Lock, ArrowRight, Eye, EyeOff, Chrome, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+
+type AuthMode = 'signin' | 'signup' | 'forgot';
 
 export default function AuthPage() {
     const [email, setEmail] = useState('');
@@ -13,9 +15,11 @@ export default function AuthPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [oauthLoading, setOauthLoading] = useState(false);
-    const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+    const [mode, setMode] = useState<AuthMode>('signin');
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const router = useRouter();
+
+    const switchMode = (next: AuthMode) => { setMode(next); setMessage(null); };
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,6 +31,12 @@ export default function AuthPage() {
                 const { error } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
                 setMessage({ type: 'success', text: 'Check your email for the confirmation link!' });
+            } else if (mode === 'forgot') {
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/account/settings`,
+                });
+                if (error) throw error;
+                setMessage({ type: 'success', text: 'Password reset link sent! Check your inbox.' });
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
@@ -50,6 +60,8 @@ export default function AuthPage() {
             setOauthLoading(false);
         }
     };
+
+    const isForgot = mode === 'forgot';
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
@@ -75,14 +87,26 @@ export default function AuthPage() {
                             <span className="text-[8px] font-black text-primary uppercase tracking-[0.3em]">Pro</span>
                         </div>
                     </Link>
-                    <h2 className="text-4xl font-black text-white tracking-tight mb-3">
-                        {mode === 'signin' ? 'Welcome Back' : 'Join the Alpha'}
-                    </h2>
-                    <p className="text-slate-500 font-medium">
-                        {mode === 'signin'
-                            ? 'Enter your credentials to access your dashboard.'
-                            : 'Start discovering high-potential keyword gaps today.'}
-                    </p>
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={mode}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <h2 className="text-4xl font-black text-white tracking-tight mb-3">
+                                {isForgot ? 'Reset Password' : mode === 'signin' ? 'Welcome Back' : 'Join the Alpha'}
+                            </h2>
+                            <p className="text-slate-500 font-medium">
+                                {isForgot
+                                    ? "Enter your email and we'll send a reset link."
+                                    : mode === 'signin'
+                                        ? 'Enter your credentials to access your dashboard.'
+                                        : 'Start discovering high-potential keyword gaps today.'}
+                            </p>
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
 
                 <div className="bg-surface border border-white/10 rounded-[32px] p-8 shadow-2xl backdrop-blur-xl">
@@ -93,36 +117,41 @@ export default function AuthPage() {
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className={`mb-6 p-4 rounded-2xl text-sm font-bold border ${message.type === 'success'
-                                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                                        : 'bg-red-500/10 border-red-500/20 text-red-400'
+                                className={`mb-6 p-4 rounded-2xl text-sm font-bold border flex items-center gap-3 ${message.type === 'success'
+                                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                    : 'bg-red-500/10 border-red-500/20 text-red-400'
                                     }`}
                             >
+                                {message.type === 'success' && <CheckCircle2 size={16} className="shrink-0" />}
                                 {message.text}
                             </motion.div>
                         )}
                     </AnimatePresence>
 
-                    {/* Google OAuth */}
-                    <button
-                        onClick={handleGoogleAuth}
-                        disabled={oauthLoading}
-                        className="w-full bg-white/5 border border-white/10 hover:bg-white/10 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all mb-6 disabled:opacity-50"
-                    >
-                        {oauthLoading ? (
-                            <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                            <Chrome size={20} />
-                        )}
-                        Continue with Google
-                    </button>
+                    {/* Google OAuth — hide on forgot password */}
+                    {!isForgot && (
+                        <>
+                            <button
+                                onClick={handleGoogleAuth}
+                                disabled={oauthLoading}
+                                className="w-full bg-white/5 border border-white/10 hover:bg-white/10 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all mb-6 disabled:opacity-50"
+                            >
+                                {oauthLoading ? (
+                                    <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <Chrome size={20} />
+                                )}
+                                Continue with Google
+                            </button>
 
-                    {/* Divider */}
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="flex-1 h-px bg-white/5" />
-                        <span className="text-slate-600 text-xs font-black uppercase tracking-widest">or</span>
-                        <div className="flex-1 h-px bg-white/5" />
-                    </div>
+                            {/* Divider */}
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="flex-1 h-px bg-white/5" />
+                                <span className="text-slate-600 text-xs font-black uppercase tracking-widest">or</span>
+                                <div className="flex-1 h-px bg-white/5" />
+                            </div>
+                        </>
+                    )}
 
                     {/* Email / Password form */}
                     <form onSubmit={handleAuth} className="space-y-5">
@@ -141,28 +170,43 @@ export default function AuthPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
-                            <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-500 group-focus-within:text-primary transition-colors" />
-                                <input
-                                    required
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-white font-bold focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-slate-700"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword((v) => !v)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
-                                    tabIndex={-1}
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
+                        {/* Password field — hidden in forgot mode */}
+                        {!isForgot && (
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between ml-1">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Password</label>
+                                    {mode === 'signin' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => switchMode('forgot')}
+                                            className="text-xs font-bold text-slate-500 hover:text-primary transition-colors"
+                                        >
+                                            Forgot password?
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="relative group">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-slate-500 group-focus-within:text-primary transition-colors" />
+                                    <input
+                                        required
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-white font-bold focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-slate-700"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((v) => !v)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                                        tabIndex={-1}
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <button
                             disabled={loading}
@@ -173,7 +217,7 @@ export default function AuthPage() {
                                 <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    {mode === 'signin' ? 'Sign In' : 'Create Account'}
+                                    {isForgot ? 'Send Reset Link' : mode === 'signin' ? 'Sign In' : 'Create Account'}
                                     <ArrowRight size={20} />
                                 </>
                             )}
@@ -181,14 +225,24 @@ export default function AuthPage() {
                     </form>
 
                     <div className="text-center mt-8 pt-6 border-t border-white/5">
-                        <button
-                            onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setMessage(null); }}
-                            className="text-slate-400 hover:text-white font-bold text-sm transition-colors"
-                        >
-                            {mode === 'signin'
-                                ? "Don't have an account? Sign up free"
-                                : 'Already have an account? Sign in'}
-                        </button>
+                        {isForgot ? (
+                            <button
+                                onClick={() => switchMode('signin')}
+                                className="text-slate-400 hover:text-white font-bold text-sm transition-colors flex items-center gap-2 mx-auto"
+                            >
+                                <ArrowLeft size={14} />
+                                Back to Sign In
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}
+                                className="text-slate-400 hover:text-white font-bold text-sm transition-colors"
+                            >
+                                {mode === 'signin'
+                                    ? "Don't have an account? Sign up free"
+                                    : 'Already have an account? Sign in'}
+                            </button>
+                        )}
                     </div>
                 </div>
             </motion.div>

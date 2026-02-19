@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Search, ShieldCheck, Zap, LineChart, DollarSign, CheckCircle2, Sparkles, TrendingUp, ArrowRight, ChevronRight, BarChart3, Star, Play } from 'lucide-react';
+import { Search, ShieldCheck, Zap, CheckCircle2, Sparkles, TrendingUp, ArrowRight, ChevronRight, BarChart3, Star, Play } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -222,7 +222,7 @@ export default function LandingPage() {
             <div className="flex -space-x-3 sm:-space-x-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-background bg-slate-800 flex items-center justify-center text-[10px] font-black text-white overflow-hidden ring-2 ring-primary/20">
-                  <img src={`https://i.pravatar.cc/100?u=${i}`} alt="user" />
+                  <img src={`https://i.pravatar.cc/100?u=${i}`} alt={`Creator ${i}`} loading="lazy" />
                 </div>
               ))}
             </div>
@@ -350,7 +350,7 @@ export default function LandingPage() {
                 </div>
                 <p className="text-slate-300 font-medium text-sm leading-relaxed flex-1">"{t.text}"</p>
                 <div className="flex items-center gap-3">
-                  <img src={t.avatar} alt={t.name} className="size-10 rounded-full ring-2 ring-primary/20" />
+                  <img src={t.avatar} alt={t.name} className="size-10 rounded-full ring-2 ring-primary/20" loading="lazy" />
                   <div>
                     <p className="text-white font-black text-sm">{t.name}</p>
                     <p className="text-slate-500 text-xs font-bold">{t.handle}</p>
