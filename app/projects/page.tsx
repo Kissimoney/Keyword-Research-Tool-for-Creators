@@ -11,12 +11,14 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/components/Toast';
+import { LayoutGrid, Network } from 'lucide-react';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 type SortKey = 'searchVolume' | 'competitionScore' | 'cpcValue' | 'keyword';
 type SortDir = 'asc' | 'desc';
 type IntentFilter = 'All' | 'Informational' | 'Commercial' | 'Transactional' | 'Navigational' | 'Viral' | 'Entertainment';
+type ViewMode = 'grid' | 'clusters';
 
 function DifficultyBadge({ score }: { score: number }) {
     if (score > 70) return (
@@ -72,6 +74,7 @@ export default function ProjectsPage() {
     const [sortKey, setSortKey] = useState<SortKey>('searchVolume');
     const [sortDir, setSortDir] = useState<SortDir>('desc');
     const [intentFilter, setIntentFilter] = useState<IntentFilter>('All');
+    const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
     const handleExportAll = () => {
         if (savedKeywords.length === 0) return;
@@ -145,6 +148,22 @@ export default function ProjectsPage() {
         return list;
     }, [savedKeywords, sortKey, sortDir, intentFilter]);
 
+    // Group keywords by cluster for the "Clusters" view
+    const clusters = useMemo(() => {
+        const map: Record<string, KeywordResult[]> = {};
+        filteredAndSorted.forEach(kw => {
+            const c = kw.cluster || 'Uncategorized';
+            if (!map[c]) map[c] = [];
+            map[c].push(kw);
+        });
+        return Object.entries(map).map(([name, keywords]) => ({
+            name,
+            keywords,
+            totalVolume: keywords.reduce((acc, k) => acc + k.searchVolume, 0),
+            avgDifficulty: Math.round(keywords.reduce((acc, k) => acc + k.competitionScore, 0) / keywords.length)
+        })).sort((a, b) => b.totalVolume - a.totalVolume);
+    }, [filteredAndSorted]);
+
     if (!mounted) return null;
 
     return (
@@ -157,7 +176,31 @@ export default function ProjectsPage() {
                         {savedKeywords.length} Saved Keyword{savedKeywords.length !== 1 ? 's' : ''} & Strategies
                     </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex items-center gap-3">
+                    {/* View Switcher */}
+                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 mr-2">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={cn(
+                                "p-2 rounded-xl transition-all flex items-center gap-2 text-xs font-black uppercase tracking-widest",
+                                viewMode === 'grid' ? "bg-white/10 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
+                            )}
+                        >
+                            <LayoutGrid size={14} />
+                            <span className="hidden sm:inline">Grid</span>
+                        </button>
+                        <button
+                            onClick={() => setViewMode('clusters')}
+                            className={cn(
+                                "p-2 rounded-xl transition-all flex items-center gap-2 text-xs font-black uppercase tracking-widest",
+                                viewMode === 'clusters' ? "bg-white/10 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
+                            )}
+                        >
+                            <Network size={14} />
+                            <span className="hidden sm:inline">Clusters</span>
+                        </button>
+                    </div>
+
                     <button
                         onClick={handleExportAll}
                         disabled={savedKeywords.length === 0}
@@ -227,84 +270,154 @@ export default function ProjectsPage() {
 
             <AnimatePresence mode="popLayout">
                 {filteredAndSorted.length > 0 ? (
-                    <motion.div
-                        layout
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
-                    >
-                        {filteredAndSorted.map((kw, idx) => (
-                            <motion.div
-                                layout
-                                key={kw.keyword}
-                                initial={{ opacity: 0, y: 16 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                transition={{ delay: idx * 0.04 }}
-                                className="bg-surface-dark border border-white/5 p-6 rounded-[28px] hover:border-primary/30 transition-all group relative overflow-hidden"
-                            >
-                                {/* Subtle glow on hover */}
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -mr-12 -mt-12 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    viewMode === 'grid' ? (
+                        <motion.div
+                            layout
+                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+                        >
+                            {filteredAndSorted.map((kw, idx) => (
+                                <motion.div
+                                    layout
+                                    key={kw.keyword}
+                                    initial={{ opacity: 0, y: 16 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ delay: idx * 0.04 }}
+                                    className="bg-surface-dark border border-white/5 p-6 rounded-[28px] hover:border-primary/30 transition-all group relative overflow-hidden"
+                                >
+                                    {/* Subtle glow on hover */}
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -mr-12 -mt-12 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                                {/* Delete button */}
-                                <div className="absolute top-0 right-0 p-4 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                    <button
-                                        onClick={() => handleRemove(kw.keyword)}
-                                        className="text-slate-600 hover:text-red-400 transition-colors p-1"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-
-                                <div className="flex flex-col h-full gap-4">
-                                    {/* Keyword name */}
-                                    <h3 className="text-base font-black text-white pr-8 leading-snug tracking-tight group-hover:text-primary transition-colors">
-                                        {kw.keyword}
-                                    </h3>
-
-                                    {/* Stats grid */}
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <div className="bg-white/5 p-3 rounded-2xl flex flex-col gap-0.5">
-                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Volume</p>
-                                            <p className="text-sm font-black text-white">{kw.searchVolume.toLocaleString()}</p>
-                                        </div>
-                                        <div className="bg-white/5 p-3 rounded-2xl flex flex-col gap-0.5">
-                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">CPC</p>
-                                            <p className="text-sm font-black text-white">${kw.cpcValue.toFixed(2)}</p>
-                                        </div>
-                                        <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-center justify-center gap-0.5">
-                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Trend</p>
-                                            <TrendIcon dir={kw.trendDirection} />
-                                        </div>
-                                    </div>
-
-                                    {/* Difficulty badge */}
-                                    <DifficultyBadge score={kw.competitionScore} />
-
-                                    {/* Strategy snippet */}
-                                    {kw.strategy && (
-                                        <p className="text-[11px] text-slate-500 italic font-medium line-clamp-2 leading-relaxed">
-                                            {kw.strategy}
-                                        </p>
-                                    )}
-
-                                    {/* Footer */}
-                                    <div className="mt-auto flex items-center justify-between pt-2 border-t border-white/5">
-                                        <span className={cn(
-                                            'text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border',
-                                            INTENT_COLORS[kw.intentType] || 'bg-slate-500/10 text-slate-400 border-slate-500/20'
-                                        )}>
-                                            {kw.intentType}
-                                        </span>
+                                    {/* Delete button */}
+                                    <div className="absolute top-0 right-0 p-4 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                         <button
-                                            onClick={() => handleViewDetails(kw.keyword)}
-                                            className="text-primary font-bold text-xs flex items-center gap-1 hover:underline"
+                                            onClick={() => handleRemove(kw.keyword)}
+                                            className="text-slate-600 hover:text-red-400 transition-colors p-1"
                                         >
-                                            Analyze <ExternalLink size={12} />
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </motion.div>
+
+                                    <div className="flex flex-col h-full gap-4">
+                                        {/* Keyword name */}
+                                        <h3 className="text-base font-black text-white pr-8 leading-snug tracking-tight group-hover:text-primary transition-colors">
+                                            {kw.keyword}
+                                        </h3>
+
+                                        {/* Stats grid */}
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div className="bg-white/5 p-3 rounded-2xl flex flex-col gap-0.5">
+                                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Volume</p>
+                                                <p className="text-sm font-black text-white">{kw.searchVolume.toLocaleString()}</p>
+                                            </div>
+                                            <div className="bg-white/5 p-3 rounded-2xl flex flex-col gap-0.5">
+                                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">CPC</p>
+                                                <p className="text-sm font-black text-white">${kw.cpcValue.toFixed(2)}</p>
+                                            </div>
+                                            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-center justify-center gap-0.5">
+                                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Trend</p>
+                                                <TrendIcon dir={kw.trendDirection} />
+                                            </div>
+                                        </div>
+
+                                        {/* Difficulty badge */}
+                                        <DifficultyBadge score={kw.competitionScore} />
+
+                                        {/* Strategy snippet */}
+                                        {kw.strategy && (
+                                            <p className="text-[11px] text-slate-500 italic font-medium line-clamp-2 leading-relaxed">
+                                                {kw.strategy}
+                                            </p>
+                                        )}
+
+                                        {/* Footer */}
+                                        <div className="mt-auto flex items-center justify-between pt-2 border-t border-white/5">
+                                            <span className={cn(
+                                                'text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border',
+                                                INTENT_COLORS[kw.intentType] || 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                                            )}>
+                                                {kw.intentType}
+                                            </span>
+                                            <button
+                                                onClick={() => handleViewDetails(kw.keyword)}
+                                                className="text-primary font-bold text-xs flex items-center gap-1 hover:underline"
+                                            >
+                                                Analyze <ExternalLink size={12} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+                        >
+                            {clusters.map((cluster, idx) => (
+                                <motion.div
+                                    key={cluster.name}
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: idx * 0.1 }}
+                                    className="bg-surface-dark border border-white/10 rounded-[40px] p-8 sm:p-10 relative overflow-hidden group shadow-2xl"
+                                >
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors" />
+
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                                        <div>
+                                            <h3 className="text-2xl font-black text-white tracking-tight mb-1">{cluster.name}</h3>
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{cluster.keywords.length} Keywords</span>
+                                                <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Total Vol: {cluster.totalVolume.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                        <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl flex flex-col items-center">
+                                            <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-0.5">Avg Difficulty</span>
+                                            <span className={cn(
+                                                "text-sm font-black",
+                                                cluster.avgDifficulty > 70 ? "text-red-400" : cluster.avgDifficulty > 30 ? "text-amber-400" : "text-emerald-400"
+                                            )}>{cluster.avgDifficulty}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {cluster.keywords.map(kw => (
+                                            <button
+                                                key={kw.keyword}
+                                                onClick={() => handleViewDetails(kw.keyword)}
+                                                className="w-full bg-white/3 border border-white/5 p-4 rounded-2xl hover:bg-white/8 hover:border-white/10 transition-all flex items-center justify-between group/kw"
+                                            >
+                                                <div className="flex flex-col items-start min-w-0">
+                                                    <span className="text-sm font-bold text-slate-200 group-hover/kw:text-primary transition-colors truncate w-full text-left">{kw.keyword}</span>
+                                                    <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter italic">{kw.strategy}</span>
+                                                </div>
+                                                <div className="flex items-center gap-3 shrink-0 ml-4">
+                                                    <span className="text-xs font-black text-white">{kw.searchVolume.toLocaleString()}</span>
+                                                    <ExternalLink size={12} className="text-slate-700 group-hover/kw:text-primary" />
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+                                        <p className="text-[10px] text-slate-500 font-medium">Topic Cluster Analysis</p>
+                                        <div className="flex -space-x-2">
+                                            {cluster.keywords.slice(0, 3).map((_, i) => (
+                                                <div key={i} className="size-6 rounded-full border-2 border-surface-dark bg-slate-800" />
+                                            ))}
+                                            {cluster.keywords.length > 3 && (
+                                                <div className="size-6 rounded-full border-2 border-surface-dark bg-surface flex items-center justify-center text-[8px] font-black text-slate-500">
+                                                    +{cluster.keywords.length - 3}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    )
                 ) : savedKeywords.length === 0 ? (
                     <motion.div
                         initial={{ opacity: 0 }}

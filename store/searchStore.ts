@@ -18,6 +18,7 @@ export interface SearchHistoryEntry {
     mode: 'web' | 'video' | 'competitor';
     timestamp: number;
     resultCount: number;
+    results: KeywordResult[]; // Store results for drill-down
 }
 
 interface SearchState {
@@ -59,11 +60,11 @@ export const useSearchStore = create<SearchState>()(
                 })),
             addToHistory: (entry) =>
                 set((state) => {
-                    // Deduplicate by query+mode, keep newest, cap at 10
+                    // Deduplicate by query+mode, keep newest, cap at 20 (increased for better drill-down)
                     const filtered = state.history.filter(
                         h => !(h.query === entry.query && h.mode === entry.mode)
                     );
-                    return { history: [entry, ...filtered].slice(0, 10) };
+                    return { history: [entry, ...filtered].slice(0, 20) };
                 }),
             clearHistory: () => set({ history: [] }),
         }),

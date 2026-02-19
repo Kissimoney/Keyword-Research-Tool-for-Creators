@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Zap, Sparkles, Copy, Check as CheckIcon } from 'lucide-react';
+import { X, Zap, Sparkles, Copy, Check as CheckIcon, FileText, ChevronRight, Database, Globe } from 'lucide-react';
 import { KeywordResult } from '@/store/searchStore';
+import { cn } from '@/lib/utils';
 
 interface Section {
     emoji: string;
@@ -68,6 +69,10 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
     const [loading, setLoading] = useState(true);
     const [isBuilding, setIsBuilding] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [draft, setDraft] = useState<string | null>(null);
+    const [draftFormat, setDraftFormat] = useState<'blog' | 'video' | 'thread'>('blog');
+    const [isDrafting, setIsDrafting] = useState(false);
+    const [showDraft, setShowDraft] = useState(false);
 
     useEffect(() => {
         const fetchBrief = async () => {
@@ -106,19 +111,41 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
         }
     };
 
+    const handleGenerateDraft = async () => {
+        setIsDrafting(true);
+        try {
+            const resp = await fetch('/api/keywords/draft', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keyword: keyword.keyword, brief, format: draftFormat }),
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                setDraft(data.draft);
+                setShowDraft(true);
+            } else {
+                console.error('Draft fail:', data.error);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsDrafting(false);
+        }
+    };
+
     const handleCopy = () => {
-        const text = fullPlan ?? brief;
+        const text = showDraft ? draft : (fullPlan ?? brief);
         if (!text) return;
-        const plain = text.replace(/#{1,3}\s*/g, '').replace(/\*{1,2}/g, '');
-        navigator.clipboard.writeText(plain).then(() => {
+        // Preserving markdown for Notion/Obsidian/Markdown apps
+        navigator.clipboard.writeText(text).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         });
     };
 
-    const activeContent = fullPlan ?? brief;
-    const sections = activeContent ? parseSections(activeContent) : [];
-    const isBusy = loading || isBuilding;
+    const activeContent = showDraft ? draft : (fullPlan ?? brief);
+    const sections = activeContent && !showDraft ? parseSections(activeContent) : [];
+    const isBusy = loading || isBuilding || isDrafting;
 
     return (
         <motion.div
@@ -180,20 +207,19 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                             {activeContent && (
                                 <button
                                     onClick={handleCopy}
-                                    className="p-2.5 rounded-2xl text-slate-400 hover:text-white transition-all"
-                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
+                                    className="p-2.5 rounded-2xl text-slate-400 hover:text-white transition-all flex items-center gap-2 pr-4 bg-white/5 border border-white/10"
                                     title="Copy to clipboard"
                                 >
-                                    {copied ? <CheckIcon size={15} className="text-primary" /> : <Copy size={15} />}
+                                    {copied ? <CheckIcon size={14} className="text-primary" /> : <Copy size={14} />}
+                                    <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
                                 </button>
                             )}
-                            {fullPlan && (
+                            {showDraft && (
                                 <button
-                                    onClick={() => setFullPlan(null)}
-                                    className="px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 transition-all hover:text-white"
-                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
+                                    onClick={() => setShowDraft(false)}
+                                    className="px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary transition-all bg-primary/10 border border-primary/20"
                                 >
-                                    ← Brief
+                                    ← Context
                                 </button>
                             )}
                             <button
@@ -215,30 +241,37 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                             <motion.div
                                 animate={{ rotate: 360 }}
                                 transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                                className="size-16 rounded-3xl flex items-center justify-center"
+                                className="size-16 rounded-3xl flex items-center justify-center shadow-2xl shadow-primary/20"
                                 style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}
                             >
                                 <Sparkles className="text-primary size-8" />
                             </motion.div>
                             <div>
-                                <p className="text-lg font-black text-white mb-2">
-                                    {isBuilding ? 'Building Strategic Roadmap...' : 'Analyzing Market Gaps...'}
+                                <p className="text-lg font-black text-white mb-2 uppercase tracking-tight">
+                                    {isDrafting ? 'Engineering Your Copy...' : isBuilding ? 'Building Strategic Roadmap...' : 'Analyzing Market Gaps...'}
                                 </p>
                                 <p className="text-sm font-medium text-slate-500">
-                                    Crafting your competitive intelligence report
+                                    {isDrafting ? `Drafting a high-conversion ${draftFormat} asset` : 'Crafting your competitive intelligence report'}
                                 </p>
-                                <div className="flex items-center justify-center gap-1.5 mt-5">
-                                    {[0, 0.2, 0.4].map((delay, i) => (
-                                        <motion.span
-                                            key={i}
-                                            className="size-2 rounded-full bg-primary"
-                                            animate={{ opacity: [0.3, 1, 0.3] }}
-                                            transition={{ duration: 1.2, repeat: Infinity, delay }}
-                                        />
-                                    ))}
-                                </div>
                             </div>
                         </div>
+                    ) : showDraft && draft ? (
+                        /* Draft Display */
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="p-6 sm:p-10"
+                        >
+                            <div className="prose prose-invert max-w-none">
+                                {draft.split('\n').map((line, i) => {
+                                    if (line.startsWith('# ')) return <h1 key={i} className="text-3xl font-black mb-6 text-white tracking-tight">{line.replace('# ', '')}</h1>;
+                                    if (line.startsWith('## ')) return <h2 key={i} className="text-xl font-black mt-10 mb-4 text-primary uppercase tracking-widest">{line.replace('## ', '')}</h2>;
+                                    if (line.startsWith('### ')) return <h3 key={i} className="text-lg font-bold mt-6 mb-2 text-white">{line.replace('### ', '')}</h3>;
+                                    if (line.trim() === '') return <div key={i} className="h-4" />;
+                                    return <p key={i} className="text-slate-300 mb-4 leading-relaxed font-medium">{line}</p>;
+                                })}
+                            </div>
+                        </motion.div>
                     ) : sections.length > 0 ? (
                         /* Sections */
                         <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
@@ -309,25 +342,41 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                 </div>
 
                 {/* ── FOOTER CTA ── */}
-                <div className="shrink-0 p-4 sm:p-6 border-t border-white/5" style={{ background: '#0d1e35' }}>
-                    {!fullPlan ? (
+                <div className="shrink-0 p-4 sm:p-6 border-t border-white/5 space-y-4" style={{ background: '#0d1e35' }}>
+                    <div className="flex items-center gap-2 p-1 bg-black/20 rounded-2xl border border-white/5 overflow-hidden">
+                        {(['blog', 'video', 'thread'] as const).map(fmt => (
+                            <button
+                                key={fmt}
+                                onClick={() => setDraftFormat(fmt)}
+                                className={cn(
+                                    "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                    draftFormat === fmt ? "bg-white/10 text-white shadow-inner" : "text-slate-600 hover:text-slate-400"
+                                )}
+                            >
+                                {fmt}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-3">
+                        {!showDraft && (
+                            <button
+                                onClick={handleBuildStrategy}
+                                disabled={isBusy || !!fullPlan}
+                                className="flex-1 bg-white/5 text-slate-400 py-4 rounded-2xl font-black hover:bg-white/10 active:scale-[0.98] transition-all uppercase tracking-widest text-[10px] sm:text-xs border border-white/5 disabled:opacity-30"
+                            >
+                                {fullPlan ? 'Plan Active' : 'Build Roadmap'}
+                            </button>
+                        )}
                         <button
-                            onClick={handleBuildStrategy}
+                            onClick={handleGenerateDraft}
                             disabled={isBusy}
-                            className="w-full bg-primary text-white py-4 sm:py-5 rounded-2xl font-black hover:brightness-110 active:scale-[0.98] transition-all uppercase tracking-widest text-xs sm:text-sm shadow-xl shadow-primary/20 flex items-center justify-center gap-3 disabled:opacity-40"
+                            className="flex-[2] bg-primary text-white py-4 rounded-2xl font-black hover:brightness-110 active:scale-[0.98] transition-all uppercase tracking-widest text-[10px] sm:text-xs shadow-xl shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-40"
                         >
-                            <Zap size={17} />
-                            Build Full Execution Plan
+                            <Zap size={14} />
+                            {isDrafting ? 'Drafting...' : `Magic ${draftFormat.toUpperCase()} Draft`}
                         </button>
-                    ) : (
-                        <button
-                            onClick={onClose}
-                            className="w-full text-slate-300 py-4 sm:py-5 rounded-2xl font-black hover:text-white active:scale-[0.98] transition-all uppercase tracking-widest text-xs sm:text-sm"
-                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-                        >
-                            Close Report
-                        </button>
-                    )}
+                    </div>
                 </div>
             </motion.div>
         </motion.div>
