@@ -31,10 +31,12 @@ interface SearchState {
         difficulty: string;
         intent: string;
     };
+    language: string; // Added language state
     setQuery: (query: string) => void;
     setResults: (results: KeywordResult[]) => void;
     setIsLoading: (isLoading: boolean) => void;
     setFilter: (key: string, value: string) => void;
+    setLanguage: (language: string) => void; // Added setLanguage setter
     addToHistory: (entry: SearchHistoryEntry) => void;
     clearHistory: () => void;
 }
@@ -51,7 +53,9 @@ export const useSearchStore = create<SearchState>()(
                 difficulty: 'All',
                 intent: 'All',
             },
+            language: 'English',
             setQuery: (query) => set({ query }),
+            setLanguage: (language: string) => set({ language }),
             setResults: (results) => set({ results }),
             setIsLoading: (isLoading) => set({ isLoading }),
             setFilter: (key, value) =>
@@ -74,6 +78,7 @@ export const useSearchStore = create<SearchState>()(
             partialize: (state) => ({
                 query: state.query,
                 history: state.history,
+                language: state.language,
             }),
         }
     )

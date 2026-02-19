@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { Search, TrendingUp, DollarSign, ExternalLink, Save, ArrowDown, Database, Check, X, FileText, Sparkles, TrendingDown, Minus, Shield, Globe, Zap, Download, FileJson, FileCode, Copy, Share2, Clock, ChevronRight } from 'lucide-react';
+import { Search, TrendingUp, DollarSign, ExternalLink, Save, ArrowDown, Database, Check, X, FileText, Sparkles, TrendingDown, Minus, Shield, Globe, Zap, Download, FileJson, FileCode, Copy, Share2, Clock, ChevronRight, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchStore, KeywordResult, SearchHistoryEntry } from '@/store/searchStore';
 import { useCreditStore } from '@/store/creditStore';
-import { useProjectStore } from '@/store/projectStore';
+import { useProjectStore, ContentProject } from '@/store/projectStore';
 import { groupHistoryByTime, GroupedHistory } from '@/lib/historyUtils';
 import { cn } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
@@ -27,7 +27,7 @@ const SUGGESTED_KEYWORDS = [
 ];
 
 export default function Dashboard() {
-    const { query, setQuery, results, setResults, isLoading, setIsLoading, history, addToHistory } = useSearchStore();
+    const { query, setQuery, results, setResults, isLoading, setIsLoading, history, addToHistory, language, setLanguage } = useSearchStore();
     const { credits, useCredits } = useCreditStore();
     const { persistCredits } = useSyncCredits();
     const { saveKeyword, savedKeywords, fetchKeywords: fetchSaved } = useProjectStore();
@@ -51,7 +51,18 @@ export default function Dashboard() {
     const [isRecapping, setIsRecapping] = useState(false);
     const [refreshingItems, setRefreshingItems] = useState<Set<string>>(new Set());
     const [activeTab, setActiveTab] = useState<'research' | 'workspace'>('research');
-    const { contentProjects, fetchProjects, removeProject } = useProjectStore();
+    const [workspaceSearch, setWorkspaceSearch] = useState('');
+    const [workspaceFilter, setWorkspaceFilter] = useState<'all' | 'draft' | 'outlining' | 'published' | 'archived'>('all');
+    const [isSendingToNotion, setIsSendingToNotion] = useState<string | null>(null);
+    const { contentProjects, fetchProjects, removeProject, updateProject } = useProjectStore();
+
+    const filteredProjects = useMemo(() => {
+        return contentProjects.filter(p => {
+            const matchesSearch = p.keyword.toLowerCase().includes(workspaceSearch.toLowerCase());
+            const matchesFilter = workspaceFilter === 'all' || p.status === workspaceFilter;
+            return matchesSearch && matchesFilter;
+        });
+    }, [contentProjects, workspaceSearch, workspaceFilter]);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -88,7 +99,7 @@ export default function Dashboard() {
             const resp = await fetch('/api/keywords', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ keyword: kw, mode: currentMode }),
+                body: JSON.stringify({ keyword: kw, mode: currentMode, language }),
             });
             const data = await resp.json();
 
@@ -145,7 +156,7 @@ export default function Dashboard() {
                 const resp = await fetch('/api/keywords', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keyword: kw, mode }),
+                    body: JSON.stringify({ keyword: kw, mode, language }),
                 });
                 const data = await resp.json();
 
@@ -239,6 +250,33 @@ export default function Dashboard() {
         }, 100);
     };
 
+    const handleSendToNotion = async (project: ContentProject) => {
+        setIsSendingToNotion(project.id);
+        try {
+            const res = await fetch('/api/integrations/notion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: project.keyword,
+                    brief: project.brief,
+                    draft: project.draft,
+                    format: project.format
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                success('Sent to Notion! Check your parent page.');
+                if (data.url) window.open(data.url, '_blank');
+            } else {
+                toastError(data.error || 'Failed to send to Notion');
+            }
+        } catch (err) {
+            toastError('Connection error');
+        } finally {
+            setIsSendingToNotion(null);
+        }
+    };
+
     const copyToNotion = () => {
         const text = results.map(r => `| ${r.keyword} | ${r.searchVolume.toLocaleString()} | ${r.competitionScore}% | ${r.intentType} | [View](${window.location.origin}/dashboard?q=${encodeURIComponent(r.keyword)}) |`).join('\n');
         const table = `### 🎯 Keyword Intelligence Report: ${query}\n\n| Keyword | Volume | Difficulty | Intent | Action |\n|---|---|---|---|---|\n${text}\n\n*Generated by **Stitch Creator Intelligence** • ${new Date().toLocaleDateString()}*`;
@@ -312,8 +350,17 @@ export default function Dashboard() {
             hasFetchedRef.current = true;
             if (results.length === 0) fetchKeywords(query);
             fetchSaved();
+            fetchProjects();
         }
-    }, [mounted, query, results.length, fetchKeywords, fetchSaved]);
+    }, [mounted, query, results.length, fetchKeywords, fetchSaved, fetchProjects]);
+
+    useEffect(() => {
+        if (activeTab === 'workspace') {
+            fetchProjects();
+        } else {
+            fetchSaved();
+        }
+    }, [activeTab, fetchProjects, fetchSaved]);
 
     const groupedResults = useMemo(() => {
         const groups: Record<string, KeywordResult[]> = {};
@@ -346,6 +393,7 @@ export default function Dashboard() {
                         key="brief-modal"
                         keyword={selectedKeyword}
                         onClose={() => setSelectedKeyword(null)}
+                        language={language}
                     />
                 )}
             </AnimatePresence>
@@ -447,6 +495,19 @@ export default function Dashboard() {
                                     <FileText size={13} />
                                     {isBulkMode ? "Bulk Active" : "Bulk Mode"}
                                 </button>
+
+                                <div className="relative group">
+                                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors z-10" size={13} />
+                                    <select
+                                        value={language}
+                                        onChange={(e) => setLanguage(e.target.value)}
+                                        className="bg-surface-dark border border-white/5 rounded-lg pl-9 pr-4 py-2 text-[11px] font-black text-slate-300 uppercase tracking-widest outline-none hover:bg-white/10 transition-all cursor-pointer appearance-none"
+                                    >
+                                        {['English', 'Spanish', 'French', 'German', 'Japanese', 'Chinese', 'Portuguese', 'Italian'].map(lang => (
+                                            <option key={lang} value={lang}>{lang}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
                                 <button
                                     onClick={() => handleSearchSubmit()}
@@ -878,37 +939,74 @@ export default function Dashboard() {
             ) : (
                 /* Workspace View */
                 <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-6">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
                         <div>
                             <h1 className="text-2xl font-black text-white tracking-tight uppercase tracking-widest text-sm">Content Workspace</h1>
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Manage your persisted drafts & strategies</p>
                         </div>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-xl">
-                            <Database size={14} className="text-primary" />
-                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">{contentProjects.length} Projects</span>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="relative group min-w-[240px]">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" size={14} />
+                                <input
+                                    type="text"
+                                    placeholder="Search projects..."
+                                    value={workspaceSearch}
+                                    onChange={(e) => setWorkspaceSearch(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs font-bold text-white placeholder:text-slate-600 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                                />
+                            </div>
+                            <select
+                                value={workspaceFilter}
+                                onChange={(e) => setWorkspaceFilter(e.target.value as any)}
+                                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs font-black text-slate-300 uppercase tracking-widest outline-none hover:bg-white/10 transition-all cursor-pointer appearance-none"
+                            >
+                                <option value="all">All Status</option>
+                                <option value="draft">Drafts</option>
+                                <option value="outlining">Outlining</option>
+                                <option value="published">Published</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                            <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-xl">
+                                <Database size={14} className="text-primary" />
+                                <span className="text-[10px] font-black text-primary uppercase tracking-widest">{filteredProjects.length} Projects</span>
+                            </div>
                         </div>
                     </div>
 
-                    {contentProjects.length === 0 ? (
+                    {filteredProjects.length === 0 ? (
                         <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[40px] bg-white/[0.01]">
                             <FileText className="mx-auto text-slate-600 mb-4" size={40} />
-                            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No projects saved yet</p>
-                            <p className="text-[10px] text-slate-600 mt-2 uppercase tracking-tight">Save a brief from the research view to start your workspace</p>
+                            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No projects found</p>
+                            <p className="text-[10px] text-slate-600 mt-2 uppercase tracking-tight">Try adjusting your search or filters</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {contentProjects.map(p => (
+                            {filteredProjects.map(p => (
                                 <div key={p.id} className="group p-6 rounded-[32px] bg-[#0d1e35] border border-white/5 hover:border-primary/30 transition-all">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="px-2.5 py-1 rounded-lg bg-primary/5 border border-primary/10">
                                             <span className="text-[9px] font-black text-primary uppercase tracking-widest">{p.format}</span>
                                         </div>
-                                        <span className={cn(
-                                            "text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg",
-                                            p.status === 'draft' ? "bg-orange-500/10 text-orange-400 border border-orange-500/20" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                        )}>
+                                        <button
+                                            onClick={() => {
+                                                const nextStatus: Record<string, string> = {
+                                                    'draft': 'outlining',
+                                                    'outlining': 'published',
+                                                    'published': 'archived',
+                                                    'archived': 'draft'
+                                                };
+                                                updateProject(p.id, { status: nextStatus[p.status] as any });
+                                            }}
+                                            className={cn(
+                                                "text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg transition-all hover:scale-105 active:scale-95",
+                                                p.status === 'draft' ? "bg-orange-500/10 text-orange-400 border border-orange-500/20" :
+                                                    p.status === 'published' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                                                        p.status === 'outlining' ? "bg-primary/10 text-primary border border-primary/20" :
+                                                            "bg-slate-500/10 text-slate-400 border border-slate-500/20"
+                                            )}
+                                        >
                                             {p.status}
-                                        </span>
+                                        </button>
                                     </div>
                                     <h3 className="text-lg font-black text-white mb-2 line-clamp-1">{p.keyword}</h3>
                                     <p className="text-[10px] text-slate-500 font-bold uppercase mb-6">{new Date(p.created_at).toLocaleDateString()}</p>
@@ -931,6 +1029,14 @@ export default function Dashboard() {
                                             className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-white transition-all border border-white/5"
                                         >
                                             View
+                                        </button>
+                                        <button
+                                            onClick={() => handleSendToNotion(p)}
+                                            disabled={isSendingToNotion === p.id}
+                                            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-primary transition-all border border-white/5 disabled:opacity-50"
+                                            title="Send directly to Notion"
+                                        >
+                                            {isSendingToNotion === p.id ? <Loader2 size={14} className="animate-spin" /> : <Share2 size={14} />}
                                         </button>
                                         <button
                                             onClick={() => removeProject(p.id)}

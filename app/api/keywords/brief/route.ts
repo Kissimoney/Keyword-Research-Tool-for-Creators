@@ -11,14 +11,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
     }
 
-    let body: { keyword?: string };
+    let body: { keyword?: string; language?: string };
     try {
         body = await request.json();
     } catch {
         return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const { keyword } = body;
+    const { keyword, language = 'English' } = body;
     if (!keyword?.trim()) {
         return NextResponse.json({ error: 'Keyword is required' }, { status: 400 });
     }
@@ -29,9 +29,9 @@ export async function POST(request: Request) {
 
     const prompt = `
 Act as a senior SEO content strategist.
-Generate a comprehensive SEO content brief for the keyword: "${keyword}".
+Generate a comprehensive SEO content brief for the keyword: "${keyword}" in the ${language} language.
 
-Include these sections (use ## for each):
+Include these sections (use ## for each, but translate headers to ${language}):
 ## 🎯 Search Intent
 ## 📝 Suggested Title & H1
 ## 🏗️ Content Structure (H2/H3 outline)
@@ -39,7 +39,7 @@ Include these sections (use ## for each):
 ## 👤 Target Audience Profile
 ## ✍️ Content Summary (2 paragraphs)
 
-Format in clean Markdown with bold labels and bullet points.
+Format in clean Markdown with bold labels and bullet points. IMPORTANT: All content must be written in ${language}.
 `.trim();
 
     try {

@@ -11,14 +11,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
     }
 
-    let body: { keyword?: string; brief?: string };
+    let body: { keyword?: string; brief?: string; language?: string };
     try {
         body = await request.json();
     } catch {
         return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const { keyword, brief } = body;
+    const { keyword, brief, language = 'English' } = body;
     if (!keyword?.trim()) {
         return NextResponse.json({ error: 'Keyword is required' }, { status: 400 });
     }
@@ -29,11 +29,11 @@ export async function POST(request: Request) {
 
     const prompt = `
 Act as a Strategic Growth Lead and Content Architect.
-Build a "Master Execution Plan" for the keyword: "${keyword}".
+Build a "Master Execution Plan" for the keyword: "${keyword}" in the ${language} language.
 
 ${brief ? `Context from initial brief:\n${brief.slice(0, 1200)}\n` : ''}
 
-Generate a deeply actionable, industrial-grade EXECUTION STRATEGY with these exact sections (use ## for each):
+Generate a deeply actionable, industrial-grade EXECUTION STRATEGY with these exact sections (use ## for each, but translate headers to ${language}):
 
 ## 🔥 The Competitive Edge
 (Specific tactical ways to outperform the current top 10 results)
@@ -53,7 +53,7 @@ Generate a deeply actionable, industrial-grade EXECUTION STRATEGY with these exa
 ## 📈 KPI Dashboard
 (Exact metrics to track success for this specific piece)
 
-Use professional, aggressive, strategic language. Format in clean Markdown with bold labels and bullet points.
+Use professional, aggressive, strategic language in ${language}. Format in clean Markdown with bold labels and bullet points. IMPORTANT: All content must be written in ${language}.
 `.trim();
 
     try {

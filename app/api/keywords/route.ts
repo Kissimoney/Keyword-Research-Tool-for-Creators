@@ -112,14 +112,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
     }
 
-    let body: { keyword?: string; mode?: string };
+    let body: { keyword?: string; mode?: string; language?: string };
     try {
         body = await request.json();
     } catch {
         return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const { keyword, mode = 'web' } = body;
+    const { keyword, mode = 'web', language = 'English' } = body;
 
     if (!keyword?.trim()) {
         return NextResponse.json({ error: 'Keyword or domain is required' }, { status: 400 });
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
     };
 
     try {
-        console.log(`[keywords] mode=${mode} keyword="${keyword}"`);
+        console.log(`[keywords] mode=${mode} language=${language} keyword="${keyword}"`);
 
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
@@ -158,28 +158,28 @@ ${meta.h1 ? `H1: ${meta.h1}` : ''}
             mode === 'video'
                 ? `
 Act as a senior Video SEO specialist (YouTube & TikTok).
-Generate exactly 20 high-value video keywords, long-tail tags, and viral video ideas for: "${keyword}".
+Generate exactly 20 high-value video keywords, long-tail tags, and viral video ideas for: "${keyword}" in the ${language} language.
 
 Return ONLY a valid JSON array (no markdown, no prose) of 20 objects with these exact keys:
-keyword, searchVolume (integer), competitionScore (0-100 integer), cpcValue (float), intentType (one of: Informational, Entertainment, Tutorial, Viral), trendDirection (one of: up, down, neutral), strategy (a specific video hook or idea), cluster (a short thematic group name).
+keyword, searchVolume (integer), competitionScore (0-100 integer), cpcValue (float), intentType (one of: Informational, Entertainment, Tutorial, Viral), trendDirection (one of: up, down, neutral), strategy (a specific video hook or idea in ${language}), cluster (a short thematic group name in ${language}).
 `
                 : mode === 'competitor'
                     ? `
 Act as a competitive intelligence analyst.
 ${contextInfo ? contextInfo + '\n' : ''}
-Analyse the keyword footprint and gap opportunities for the competitor: "${keyword}".
-Generate exactly 20 high-ROI keywords they likely rank for or where they are vulnerable.
+Analyse the keyword footprint and gap opportunities for the competitor: "${keyword}" in the ${language} language.
+Generate exactly 20 high-ROI keywords they likely rank for or where they are vulnerable in ${language}.
 Focus on "Competitor Gaps" and "Direct Hits".
 
 Return ONLY a valid JSON array (no markdown, no prose) of 20 objects with these exact keys:
-keyword, searchVolume (integer), competitionScore (0-100 integer), cpcValue (float), intentType (one of: Commercial, Transactional, Informational), trendDirection (one of: up, down, neutral), strategy (how to beat them on this keyword), cluster (one of: Competitor Gaps, Direct Hits, Brand Alternatives, Buyer Intent).
+keyword, searchVolume (integer), competitionScore (0-100 integer), cpcValue (float), intentType (one of: Commercial, Transactional, Informational), trendDirection (one of: up, down, neutral), strategy (how to beat them on this keyword in ${language}), cluster (in ${language}, one of: Competitor Gaps, Direct Hits, Brand Alternatives, Buyer Intent).
 `
                     : `
 Act as a senior Web SEO specialist and data analyst.
-Generate exactly 20 high-value keywords for: "${keyword}".
+Generate exactly 20 high-value keywords for: "${keyword}" in the ${language} language.
 
 Return ONLY a valid JSON array (no markdown, no prose) of 20 objects with these exact keys:
-keyword, searchVolume (integer), competitionScore (0-100 integer), cpcValue (float), intentType (one of: Informational, Commercial, Transactional, Navigational), trendDirection (one of: up, down, neutral), strategy (a specific content angle), cluster (a short thematic group name).
+keyword, searchVolume (integer), competitionScore (0-100 integer), cpcValue (float), intentType (one of: Informational, Commercial, Transactional, Navigational), trendDirection (one of: up, down, neutral), strategy (a specific content angle in ${language}), cluster (a short thematic group name in ${language}).
 `;
 
         try {

@@ -62,7 +62,7 @@ function parseSections(markdown: string): Section[] {
     });
 }
 
-export default function BriefModal({ keyword, onClose }: { keyword: KeywordResult; onClose: () => void }) {
+export default function BriefModal({ keyword, onClose, language = 'English' }: { keyword: KeywordResult; onClose: () => void; language?: string }) {
     const [brief, setBrief] = useState<string | null>(null);
     const [fullPlan, setFullPlan] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -81,7 +81,7 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
                 const resp = await fetch('/api/keywords/brief', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keyword: keyword.keyword }),
+                    body: JSON.stringify({ keyword: keyword.keyword, language }),
                 });
                 const data = await resp.json();
                 setBrief(data.brief);
@@ -100,7 +100,7 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
             const resp = await fetch('/api/keywords/build', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ keyword: keyword.keyword, brief }),
+                body: JSON.stringify({ keyword: keyword.keyword, brief, language }),
             });
             const data = await resp.json();
             if (resp.ok) setFullPlan(data.plan);
@@ -118,7 +118,7 @@ export default function BriefModal({ keyword, onClose }: { keyword: KeywordResul
             const resp = await fetch('/api/keywords/draft', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ keyword: keyword.keyword, brief, format: draftFormat }),
+                body: JSON.stringify({ keyword: keyword.keyword, brief, format: draftFormat, language }),
             });
             const data = await resp.json();
             if (resp.ok) {

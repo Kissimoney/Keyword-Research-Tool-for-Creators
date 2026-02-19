@@ -22,6 +22,7 @@ interface ProjectState {
 
     // Content Project Actions
     fetchProjects: () => Promise<void>;
+    updateProject: (id: string, updates: Partial<ContentProject>) => Promise<void>;
     removeProject: (id: string) => Promise<void>;
 }
 
@@ -100,6 +101,21 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
             set({ contentProjects: data });
         }
         set({ isLoading: false });
+    },
+
+    updateProject: async (id, updates) => {
+        const { error } = await supabase
+            .from('content_projects')
+            .update(updates)
+            .eq('id', id);
+
+        if (!error) {
+            set((state) => ({
+                contentProjects: state.contentProjects.map(p =>
+                    p.id === id ? { ...p, ...updates } : p
+                )
+            }));
+        }
     },
 
     removeProject: async (id) => {

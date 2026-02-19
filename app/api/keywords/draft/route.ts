@@ -11,14 +11,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
     }
 
-    let body: { keyword?: string; brief?: string; format?: 'blog' | 'video' | 'thread' };
+    let body: { keyword?: string; brief?: string; format?: 'blog' | 'video' | 'thread'; language?: string };
     try {
         body = await request.json();
     } catch {
         return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const { keyword, brief, format = 'blog' } = body;
+    const { keyword, brief, format = 'blog', language = 'English' } = body;
     if (!keyword?.trim()) {
         return NextResponse.json({ error: 'Keyword is required' }, { status: 400 });
     }
@@ -28,14 +28,14 @@ export async function POST(request: Request) {
     }
 
     const formatPrompts = {
-        blog: "Generate a comprehensive, high-authority blog post (approx 600 words). Use a professional, data-driven tone with catchy subheadings, a strong introduction, and a concluding call-to-action.",
-        video: "Generate a high-engagement YouTube video script (3-5 minutes). Include a cinematic intro hook, 3 key educational segments, and a high-conversion outro.",
-        thread: "Generate a viral-ready 8-12 post X (Twitter) thread. Start with a curiosity-gap hook, provide rapid-fire value, and end with a transition to a newsletter/link."
+        blog: `Generate a comprehensive, high-authority blog post (approx 600 words) in ${language}. Use a professional, data-driven tone with catchy subheadings, a strong introduction, and a concluding call-to-action.`,
+        video: `Generate a high-engagement YouTube video script (3-5 minutes) in ${language}. Include a cinematic intro hook, 3 key educational segments, and a high-conversion outro.`,
+        thread: `Generate a viral-ready 8-12 post X (Twitter) thread in ${language}. Start with a curiosity-gap hook, provide rapid-fire value, and end with a transition to a newsletter/link.`
     };
 
     const prompt = `
 Act as an Elite Digital Strategist and Content Engineer.
-Your goal is to transform a keyword brief into a publication-ready content draft.
+Your goal is to transform a keyword brief into a publication-ready content draft in the ${language} language.
 
 Keyword/Topic: "${keyword}"
 Strategic Context:
@@ -44,7 +44,7 @@ ${brief ? brief.slice(0, 1500) : "No context provided."}
 REQUIRED FORMAT: ${format.toUpperCase()}
 DRAFT SPECIFICATIONS: ${formatPrompts[format]}
 
-Format the output in clean, structured Markdown. Use bolding and lists for readability.
+Format the output in clean, structured Markdown. Use bolding and lists for readability. IMPORTANT: All content must be written in ${language}.
 `.trim();
 
     try {
