@@ -8,6 +8,7 @@ import { useCreditStore } from '@/store/creditStore';
 import { useProjectStore } from '@/store/projectStore';
 import { cn } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
+import { useSyncCredits } from '@/hooks/use-sync-credits';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import BriefModal from '@/components/BriefModal';
@@ -27,6 +28,7 @@ const SUGGESTED_KEYWORDS = [
 export default function Dashboard() {
     const { query, setQuery, results, setResults, isLoading, setIsLoading, history, addToHistory } = useSearchStore();
     const { credits, useCredits } = useCreditStore();
+    const { persistCredits } = useSyncCredits();
     const { saveKeyword, savedKeywords, fetchKeywords: fetchSaved } = useProjectStore();
     const { success, error: toastError, info } = useToast();
 
@@ -80,7 +82,8 @@ export default function Dashboard() {
 
             if (resp.ok) {
                 setResults(data);
-                useCredits(1);
+                const spent = useCredits(1);
+                if (spent) persistCredits(credits - 1);
                 addToHistory({ query: kw, mode: currentMode, timestamp: Date.now(), resultCount: data.length });
             } else {
                 toastError(`Analysis failed: ${data.error}`);
@@ -91,7 +94,7 @@ export default function Dashboard() {
         } finally {
             setIsLoading(false);
         }
-    }, [credits, setIsLoading, setResults, useCredits, mode, addToHistory, toastError]);
+    }, [credits, setIsLoading, setResults, useCredits, persistCredits, mode, addToHistory, toastError]);
 
     const handleSearchSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();

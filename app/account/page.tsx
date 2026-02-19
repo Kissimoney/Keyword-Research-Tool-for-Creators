@@ -20,6 +20,7 @@ import {
 import { useCreditStore } from '@/store/creditStore';
 import Link from 'next/link';
 import { useToast } from '@/components/Toast';
+import { useSyncCredits } from '@/hooks/use-sync-credits';
 
 export default function AccountPage() {
     const router = useRouter();
@@ -27,6 +28,7 @@ export default function AccountPage() {
     const [loading, setLoading] = useState(true);
     const credits = useCreditStore((state) => state.credits);
     const { success } = useToast();
+    useSyncCredits(); // Load real balance from Supabase on mount
 
     useEffect(() => {
         const checkUser = async () => {
