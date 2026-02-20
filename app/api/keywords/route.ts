@@ -58,59 +58,84 @@ function extractJsonArray(raw: string): unknown[] {
 }
 
 function buildFallback(keyword: string, mode: string, language: string) {
+    const lang = language.toLowerCase();
+
+    // Simple dictionaries for top languages to fake AI response nicely
+    const strings: Record<string, any> = {
+        german: {
+            video: { hooks: ['wie man', 'beste', 'tutorial', 'test 2026', 'für anfänger', 'tipps', 'fehler', 'geheimnisse'], clusters: ['Anleitung', 'Unterhaltung', 'Viral', 'Bildung'], strategy: (h: string) => `Erstelle ein "${h}"-Video für ${keyword}, um YouTube-Traffic zu erfassen.` },
+            comp: { angles: ['alternative', 'vs', 'preise', 'erfahrungen', 'gratis testen', 'rabatt', 'funktionen', 'vergleich'], clusters: ['Wettbewerbslücken', 'Direkte Treffer', 'Markenalternativen', 'Käuferabsicht'], strategy: (a: string) => `Zielen Sie auf "${keyword} ${a}" ab, um den Traffic von Wettbewerbern abzufangen.` },
+            web: { suffixes: ['beste', 'wie man', 'in meiner nähe', 'für anfänger', '2026', 'leitfaden', 'erfahrungen', 'preise'], clusters: ['Allgemeine Recherche', 'Kaufabsicht', 'Informativ', 'Vergleich'], strategy: (s: string) => `Erstellen Sie eine gezielte "${s}"-Ressource für den Begriff "${keyword}".` },
+            intents: { 'Tutorial': 'Anleitung', 'Entertainment': 'Unterhaltung', 'Informational': 'Informativ', 'Viral': 'Viral', 'Commercial': 'Kommerziell', 'Transactional': 'Transaktional' }
+        },
+        spanish: {
+            video: { hooks: ['como hacer', 'mejores', 'tutorial', 'reseña 2026', 'para principiantes', 'consejos', 'errores', 'secretos'], clusters: ['Tutorial', 'Entretenimiento', 'Viral', 'Educativo'], strategy: (h: string) => `Crea un video de "${h}" sobre ${keyword} para captar tráfico en YouTube.` },
+            comp: { angles: ['alternativa', 'vs', 'precios', 'reseña', 'prueba gratis', 'descuento', 'características', 'comparación'], clusters: ['Brechas', 'Impacto Directo', 'Alternativas', 'Intención de Compra'], strategy: (a: string) => `Dirígete a "${keyword} ${a}" para interceptar el tráfico del competidor.` },
+            web: { suffixes: ['mejor', 'como hacer', 'cerca de mi', 'para principiantes', '2026', 'guia', 'reseña', 'precio'], clusters: ['Investigación', 'Intención Compra', 'Informativo', 'Comparación'], strategy: (s: string) => `Crea un recurso específico sobre "${s}" para captar tráfico hacia "${keyword}".` },
+            intents: { 'Tutorial': 'Tutorial', 'Entertainment': 'Entretenimiento', 'Informational': 'Informativo', 'Viral': 'Viral', 'Commercial': 'Comercial', 'Transactional': 'Transaccional' }
+        },
+        french: {
+            video: { hooks: ['comment', 'meilleur', 'tutoriel', 'avis 2026', 'pour debutants', 'astuces', 'erreurs', 'secrets'], clusters: ['Tutoriel', 'Divertissement', 'Viral', 'Éducatif'], strategy: (h: string) => `Créez une vidéo "${h}" ciblant ${keyword} pour capter le trafic YouTube.` },
+            comp: { angles: ['alternative', 'vs', 'prix', 'avis', 'essai gratuit', 'reduction', 'fonctionnalités', 'comparaison'], clusters: ['Lacunes', 'Coups Directs', 'Alternatives', 'Intention'], strategy: (a: string) => `Ciblez "${keyword} ${a}" pour intercepter le trafic concurrentiel.` },
+            web: { suffixes: ['meilleur', 'comment', 'pres de chez moi', 'pour debutants', '2026', 'guide', 'avis', 'prix'], clusters: ['Recherche', 'Intention d\'Achat', 'Informatif', 'Comparaison'], strategy: (s: string) => `Créez une ressource "${s}" ciblée pour attirer du trafic sur "${keyword}".` },
+            intents: { 'Tutorial': 'Tutoriel', 'Entertainment': 'Divertissement', 'Informational': 'Informatif', 'Viral': 'Viral', 'Commercial': 'Commercial', 'Transactional': 'Transactionnel' }
+        }
+    };
+
+    const d = strings[lang] || {
+        video: { hooks: ['how to', 'best', 'tutorial', 'review 2026', 'for beginners', 'tips', 'mistakes', 'secrets'], clusters: ['Tutorial', 'Entertainment', 'Viral', 'Educational'], strategy: (h: string) => `Create a "${h}" video targeting ${keyword} to capture YouTube search traffic.` },
+        comp: { angles: ['alternative', 'vs competitor', 'pricing', 'review', 'free trial', 'discount', 'features', 'comparison'], clusters: ['Competitor Gaps', 'Direct Hits', 'Brand Alternatives', 'Buyer Intent'], strategy: (a: string) => `Target "${keyword} ${a}" to intercept competitor traffic at the decision stage.` },
+        web: { suffixes: ['best', 'how to', 'near me', 'for beginners', '2026', 'guide', 'review', 'pricing'], clusters: ['General Research', 'Buyer Intent', 'Educational', 'Comparison'], strategy: (s: string) => `Create a targeted "${s}" resource to capture mid-funnel traffic for "${keyword}".` },
+        intents: { 'Tutorial': 'Tutorial', 'Entertainment': 'Entertainment', 'Informational': 'Informational', 'Viral': 'Viral', 'Commercial': 'Commercial', 'Transactional': 'Transactional' }
+    };
+
     if (mode === 'video') {
-        const hooks = ['how to', 'best', 'tutorial', 'review 2026', 'for beginners', 'tips', 'mistakes', 'secrets'];
-        const clusters = ['Tutorial', 'Entertainment', 'Viral', 'Educational'];
-        return hooks.map((h, i) => {
+        return d.video.hooks.map((h: string, i: number) => {
             const intentType = ['Tutorial', 'Entertainment', 'Informational', 'Viral'][i % 4];
             return {
-                keyword: `${keyword} ${h} (${language})`,
+                keyword: `${keyword} ${h}`,
                 searchVolume: Math.floor(Math.random() * 80_000) + 5_000,
                 competitionScore: Math.floor(Math.random() * 50) + 10,
                 cpcValue: parseFloat((Math.random() * 3).toFixed(2)),
                 intentType,
-                intentLabel: `${intentType} (${language})`,
+                intentLabel: d.intents[intentType as keyof typeof d.intents],
                 trendDirection: Math.random() > 0.4 ? 'up' : 'neutral',
-                strategy: `[${language}] Create a "${h}" video targeting ${keyword} to capture YouTube search traffic.`,
-                cluster: `${clusters[i % clusters.length]} (${language})`,
+                strategy: d.video.strategy(h),
+                cluster: d.video.clusters[i % d.video.clusters.length],
             }
         });
     }
 
     if (mode === 'competitor') {
-        const angles = ['alternative', 'vs competitor', 'pricing', 'review', 'free trial', 'discount', 'features', 'comparison'];
-        const clusters = ['Competitor Gaps', 'Direct Hits', 'Brand Alternatives', 'Buyer Intent'];
-        return angles.map((a, i) => {
+        return d.comp.angles.map((a: string, i: number) => {
             const intentType = ['Commercial', 'Transactional', 'Informational'][i % 3];
             return {
-                keyword: `${keyword} ${a} (${language})`,
+                keyword: `${keyword} ${a}`,
                 searchVolume: Math.floor(Math.random() * 20_000) + 1_000,
                 competitionScore: Math.floor(Math.random() * 70) + 20,
                 cpcValue: parseFloat((Math.random() * 8).toFixed(2)),
                 intentType,
-                intentLabel: `${intentType} (${language})`,
+                intentLabel: d.intents[intentType as keyof typeof d.intents],
                 trendDirection: Math.random() > 0.5 ? 'up' : 'neutral',
-                strategy: `[${language}] Target "${keyword} ${a}" to intercept competitor traffic at the decision stage.`,
-                cluster: `${clusters[i % clusters.length]} (${language})`,
+                strategy: d.comp.strategy(a),
+                cluster: d.comp.clusters[i % d.comp.clusters.length],
             }
         });
     }
 
     // Web (default)
-    const suffixes = ['best', 'how to', 'near me', 'for beginners', '2026', 'guide', 'review', 'pricing'];
-    const clusters = ['General Research', 'Buyer Intent', 'Educational', 'Comparison'];
-    return suffixes.map((s, i) => {
+    return d.web.suffixes.map((s: string, i: number) => {
         const intentType = i % 2 === 0 ? 'Informational' : 'Commercial';
         return {
-            keyword: `${keyword} ${s} (${language})`,
+            keyword: `${keyword} ${s}`,
             searchVolume: Math.floor(Math.random() * 50_000) + 500,
             competitionScore: Math.floor(Math.random() * 60) + 20,
             cpcValue: parseFloat((Math.random() * 5).toFixed(2)),
             intentType,
-            intentLabel: `${intentType} (${language})`,
+            intentLabel: d.intents[intentType as keyof typeof d.intents],
             trendDirection: Math.random() > 0.5 ? 'up' : 'neutral',
-            strategy: `[${language}] Create a targeted "${s}" resource to capture mid-funnel traffic for "${keyword}".`,
-            cluster: `${clusters[i % clusters.length]} (${language})`,
+            strategy: d.web.strategy(s),
+            cluster: d.web.clusters[i % d.web.clusters.length],
         }
     });
 }
@@ -176,8 +201,17 @@ Act as a senior Video SEO specialist (YouTube & TikTok).
 Generate exactly 20 high-value video keywords, long-tail tags, and viral video ideas for: "${keyword}" in the ${language} language.
 CRITICAL: The values for 'keyword', 'strategy', 'cluster', and 'intentLabel' MUST be fully translated and localized into ${language}.
 
-Return ONLY a valid JSON array (no markdown, no prose) of 20 objects with these exact keys:
-keyword (translated), searchVolume (integer), competitionScore (0-100 integer), cpcValue (float), intentType (MUST remain in English, one of: Informational, Entertainment, Tutorial, Viral), intentLabel (the translated intent intentType in ${language}), trendDirection (one of: up, down, neutral), strategy (a specific video hook or idea in ${language}), cluster (a short thematic group name in ${language}).
+Return ONLY a valid JSON array (no markdown, no prose) of 20 objects. 
+The JSON objects MUST use these exact keys: keyword, searchVolume, competitionScore, cpcValue, intentType, intentLabel, trendDirection, strategy, cluster.
+- keyword: string (translated to ${language})
+- searchVolume: integer
+- competitionScore: integer 0-100
+- cpcValue: float
+- intentType: string (MUST be English, one of: Informational, Entertainment, Tutorial, Viral)
+- intentLabel: string (the translated intentType in ${language})
+- trendDirection: string (up, down, neutral)
+- strategy: string (a specific video hook or idea in ${language})
+- cluster: string (a short thematic group name in ${language})
 `
                 : mode === 'competitor'
                     ? `
@@ -188,8 +222,17 @@ Generate exactly 20 high-ROI keywords they likely rank for or where they are vul
 Focus on "Competitor Gaps" and "Direct Hits".
 CRITICAL: The values for 'keyword', 'strategy', 'cluster', and 'intentLabel' MUST be fully translated and localized into ${language}.
 
-Return ONLY a valid JSON array (no markdown, no prose) of 20 objects with these exact keys:
-keyword (translated), searchVolume (integer), competitionScore (0-100 integer), cpcValue (float), intentType (MUST remain in English, one of: Commercial, Transactional, Informational), intentLabel (the translated intentType in ${language}), trendDirection (one of: up, down, neutral), strategy (how to beat them on this keyword in ${language}), cluster (in ${language}, one of: Competitor Gaps, Direct Hits, Brand Alternatives, Buyer Intent).
+Return ONLY a valid JSON array (no markdown, no prose) of 20 objects.
+The JSON objects MUST use these exact keys: keyword, searchVolume, competitionScore, cpcValue, intentType, intentLabel, trendDirection, strategy, cluster.
+- keyword: string (translated to ${language})
+- searchVolume: integer
+- competitionScore: integer 0-100
+- cpcValue: float
+- intentType: string (MUST be English, one of: Commercial, Transactional, Informational)
+- intentLabel: string (the translated intentType in ${language})
+- trendDirection: string (up, down, neutral)
+- strategy: string (how to beat them on this keyword in ${language})
+- cluster: string (in ${language}, one of: Competitor Gaps, Direct Hits, Brand Alternatives, Buyer Intent)
 `
                     : `
 Act as a senior Web SEO specialist and data analyst.
@@ -197,8 +240,17 @@ ${isLiveMode ? 'USE REAL-TIME GOOGLE SEARCH to identify current trends, skyrocke
 Generate exactly 20 high-value keywords for: "${keyword}" in the ${language} language.
 CRITICAL: The values for 'keyword', 'strategy', 'cluster', and 'intentLabel' MUST be fully translated and localized into ${language}.
 
-Return ONLY a valid JSON array (no markdown, no prose) of 20 objects with these exact keys:
-keyword (translated), searchVolume (integer), competitionScore (0-100 integer), cpcValue (float), intentType (MUST remain in English, one of: Informational, Commercial, Transactional, Navigational), intentLabel (the translated intentType in ${language}), trendDirection (one of: up, down, neutral), strategy (a specific content angle in ${language}), cluster (a short thematic group name in ${language}).
+Return ONLY a valid JSON array (no markdown, no prose) of 20 objects.
+The JSON objects MUST use these exact keys: keyword, searchVolume, competitionScore, cpcValue, intentType, intentLabel, trendDirection, strategy, cluster.
+- keyword: string (translated to ${language})
+- searchVolume: integer
+- competitionScore: integer 0-100
+- cpcValue: float
+- intentType: string (MUST be English, one of: Informational, Commercial, Transactional, Navigational)
+- intentLabel: string (the translated intentType in ${language})
+- trendDirection: string (up, down, neutral)
+- strategy: string (a specific content angle in ${language})
+- cluster: string (a short thematic group name in ${language})
 `;
 
         try {
