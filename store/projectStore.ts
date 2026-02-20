@@ -10,6 +10,7 @@ export interface ContentProject {
     format: string;
     status: 'draft' | 'outlining' | 'published' | 'archived';
     created_at: string;
+    updated_at?: string;
 }
 
 interface ProjectState {
@@ -58,7 +59,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     saveKeyword: async (keyword) => {
         if (get().savedKeywords.some(k => k.keyword === keyword.keyword)) return;
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user?.email) return;
+        if (!user) return;
 
         const { error } = await supabase.from('saved_keywords').insert([{
             keyword: keyword.keyword,
@@ -69,7 +70,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
             trend_direction: keyword.trendDirection,
             strategy: keyword.strategy,
             cluster: keyword.cluster,
-            user_email: user.email,
+            user_id: user.id
         }]);
 
         if (!error) {

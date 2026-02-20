@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { Search, TrendingUp, DollarSign, ExternalLink, Save, ArrowDown, Database, Check, X, FileText, Sparkles, TrendingDown, Minus, Shield, Globe, Zap, Download, FileJson, FileCode, Copy, Share2, Clock, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, TrendingUp, DollarSign, ExternalLink, Save, ArrowDown, Database, Check, X, FileText, Sparkles, TrendingDown, Minus, Shield, Globe, Zap, Download, FileJson, FileCode, Copy, Share2, Clock, ChevronRight, Loader2, Link as LinkIcon, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchStore, KeywordResult, SearchHistoryEntry } from '@/store/searchStore';
 import { useCreditStore } from '@/store/creditStore';
@@ -12,9 +12,13 @@ import { useMounted } from '@/hooks/use-mounted';
 import { useSyncCredits } from '@/hooks/use-sync-credits';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useSyncSettings } from '@/hooks/use-sync-settings';
 import BriefModal from '@/components/BriefModal';
 import { useToast } from '@/components/Toast';
 import OnboardingModal from '@/components/OnboardingModal';
+import AIEditor from '@/components/AIEditor';
+import TopicMap from '@/components/TopicMap';
+import { LayoutGrid, Network } from 'lucide-react';
 
 
 const SUGGESTED_KEYWORDS = [
@@ -57,6 +61,11 @@ export default function Dashboard() {
     const [workspaceSearch, setWorkspaceSearch] = useState('');
     const [workspaceFilter, setWorkspaceFilter] = useState<'all' | 'draft' | 'outlining' | 'published' | 'archived'>('all');
     const [isSendingToNotion, setIsSendingToNotion] = useState<string | null>(null);
+    const [competitorUrl, setCompetitorUrl] = useState('');
+    const [teardownResult, setTeardownResult] = useState<string | null>(null);
+    const [isTearingDown, setIsTearingDown] = useState(false);
+    const [editingProject, setEditingProject] = useState<ContentProject | null>(null);
+    const [workspaceView, setWorkspaceView] = useState<'grid' | 'map'>('grid');
     const { contentProjects, fetchProjects, removeProject, updateProject } = useProjectStore();
 
     const filteredProjects = useMemo(() => {
@@ -67,15 +76,21 @@ export default function Dashboard() {
         });
     }, [contentProjects, workspaceSearch, workspaceFilter]);
 
+    useSyncSettings();
+
     useEffect(() => {
         const checkAuth = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                 router.push('/auth');
+            } else {
+                // Ensure data is synced on mount
+                fetchSaved();
+                fetchProjects();
             }
         };
         checkAuth();
-    }, [router]);
+    }, [router, fetchSaved, fetchProjects]);
 
     // Global Cmd/Ctrl+K shortcut to focus search
     useEffect(() => {
@@ -251,6 +266,33 @@ export default function Dashboard() {
             setShowExportMenu(false);
             success('JSON exported successfully!');
         }, 100);
+    };
+
+    const handleTeardown = async () => {
+        if (!competitorUrl || !query) {
+            toastError("Please enter both a Focus Keyword and a Competitor URL.");
+            return;
+        }
+        setIsTearingDown(true);
+        setTeardownResult(null);
+        try {
+            const res = await fetch('/api/keywords/teardown', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: competitorUrl, keyword: query, language })
+            });
+            const data = await res.json();
+            if (data.teardown) {
+                setTeardownResult(data.teardown);
+                success("Teardown complete! Analysis ready below.");
+            } else {
+                throw new Error(data.error || "Teardown failed");
+            }
+        } catch (err: any) {
+            toastError(err.message);
+        } finally {
+            setIsTearingDown(false);
+        }
     };
 
     const handleSendToNotion = async (project: ContentProject) => {
@@ -635,7 +677,6 @@ export default function Dashboard() {
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: clusterIdx * 0.08 }}
                                         >
-                                            {/* Cluster accordion header */}
                                             <button
                                                 onClick={() => toggleCluster(cluster)}
                                                 className="w-full flex items-center gap-3 mb-3 px-4 group"
@@ -822,6 +863,80 @@ export default function Dashboard() {
                         </div>
                     </main>
 
+                    {/* URL Teardown Panel (Only for Competitor Mode) */}
+                    <AnimatePresence>
+                        {mode === 'competitor' && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="mt-8 pt-6 border-t border-white/10 max-w-7xl mx-auto px-3 sm:px-4"
+                            >
+                                <div className="flex flex-col md:flex-row gap-4">
+                                    <div className="flex-1 relative">
+                                        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-primary">
+                                            <LinkIcon size={18} />
+                                        </div>
+                                        <input
+                                            type="url"
+                                            value={competitorUrl}
+                                            onChange={(e) => setCompetitorUrl(e.target.value)}
+                                            placeholder="Paste competitor URL for surgical teardown..."
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-4 text-white font-bold focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-600 outline-none"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleTeardown}
+                                        disabled={isTearingDown || !competitorUrl}
+                                        className="px-8 py-4 bg-primary/20 border border-primary/50 rounded-2xl text-primary font-black uppercase tracking-widest text-xs hover:bg-primary/30 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 whitespace-nowrap"
+                                    >
+                                        {isTearingDown ? (
+                                            <div className="size-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                        ) : (
+                                            <Zap size={16} />
+                                        )}
+                                        Surgical Teardown
+                                    </button>
+                                </div>
+
+                                {teardownResult && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mt-6 bg-surface-dark border border-primary/20 p-8 rounded-[32px] overflow-hidden relative group shadow-2xl"
+                                    >
+                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
+                                            <ShieldAlert size={64} className="text-primary" />
+                                        </div>
+                                        <div className="relative z-10 prose prose-invert prose-p:text-slate-400 prose-headings:text-white max-w-none">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <span className="bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">AI Competitor Auditor</span>
+                                                <h3 className="m-0 text-xl font-black italic">Surgical <span className="text-primary">Teardown</span> Results</h3>
+                                            </div>
+                                            {/* Simple Custom Markdown Renderer */}
+                                            <div className="space-y-4">
+                                                {teardownResult.split('\n').map((line, i) => {
+                                                    if (line.startsWith('##')) return <h2 key={i} className="text-xl font-black mt-6 mb-2">{line.replace(/^##\s*/, '')}</h2>;
+                                                    if (line.startsWith('#')) return <h1 key={i} className="text-2xl font-black mt-8 mb-4">{line.replace(/^#\s*/, '')}</h1>;
+                                                    if (line.startsWith('**') || line.startsWith('* ')) {
+                                                        return <p key={i} className="text-slate-300 ml-4">• {line.replace(/^\*+\s*/, '')}</p>;
+                                                    }
+                                                    return <p key={i} className="text-slate-400">{line}</p>;
+                                                })}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setTeardownResult(null)}
+                                            className="mt-6 text-slate-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
+                                        >
+                                            <ArrowLeft size={12} /> Clear Analysis
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                     <AnimatePresence>
                         {results.length > 0 && activeTab === 'research' && (
                             <motion.div
@@ -985,6 +1100,22 @@ export default function Dashboard() {
                                 <option value="published">Published</option>
                                 <option value="archived">Archived</option>
                             </select>
+                            <div className="flex bg-white/5 border border-white/10 rounded-xl p-1">
+                                <button
+                                    onClick={() => setWorkspaceView('grid')}
+                                    className={cn("p-2 rounded-lg transition-all", workspaceView === 'grid' ? "bg-primary text-white" : "text-slate-500 hover:text-white")}
+                                    title="Grid View"
+                                >
+                                    <LayoutGrid size={16} />
+                                </button>
+                                <button
+                                    onClick={() => setWorkspaceView('map')}
+                                    className={cn("p-2 rounded-lg transition-all", workspaceView === 'map' ? "bg-primary text-white" : "text-slate-500 hover:text-white")}
+                                    title="Visual Map"
+                                >
+                                    <Network size={16} />
+                                </button>
+                            </div>
                             <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-xl">
                                 <Database size={14} className="text-primary" />
                                 <span className="text-[10px] font-black text-primary uppercase tracking-widest">{filteredProjects.length} Projects</span>
@@ -992,85 +1123,83 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {filteredProjects.length === 0 ? (
-                        <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[40px] bg-white/[0.01]">
-                            <FileText className="mx-auto text-slate-600 mb-4" size={40} />
-                            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No projects found</p>
-                            <p className="text-[10px] text-slate-600 mt-2 uppercase tracking-tight">Try adjusting your search or filters</p>
-                        </div>
+                    {workspaceView === 'map' ? (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                        >
+                            <TopicMap />
+                        </motion.div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {filteredProjects.map(p => (
-                                <div key={p.id} className="group p-6 rounded-[32px] bg-[#0d1e35] border border-white/5 hover:border-primary/30 transition-all">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="px-2.5 py-1 rounded-lg bg-primary/5 border border-primary/10">
-                                            <span className="text-[9px] font-black text-primary uppercase tracking-widest">{p.format}</span>
-                                        </div>
-                                        <button
-                                            onClick={() => {
-                                                const nextStatus: Record<string, string> = {
-                                                    'draft': 'outlining',
-                                                    'outlining': 'published',
-                                                    'published': 'archived',
-                                                    'archived': 'draft'
-                                                };
-                                                updateProject(p.id, { status: nextStatus[p.status] as any });
-                                            }}
-                                            className={cn(
-                                                "text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg transition-all hover:scale-105 active:scale-95",
-                                                p.status === 'draft' ? "bg-orange-500/10 text-orange-400 border border-orange-500/20" :
-                                                    p.status === 'published' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                                                        p.status === 'outlining' ? "bg-primary/10 text-primary border border-primary/20" :
-                                                            "bg-slate-500/10 text-slate-400 border border-slate-500/20"
-                                            )}
-                                        >
-                                            {p.status}
-                                        </button>
-                                    </div>
-                                    <h3 className="text-lg font-black text-white mb-2 line-clamp-1">{p.keyword}</h3>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase mb-6">{new Date(p.created_at).toLocaleDateString()}</p>
-
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => {
-                                                // Map the project back to a KeywordResult-like object to use the BriefModal
-                                                // This is a bit of a hack but works for now
-                                                setSelectedKeyword({
-                                                    keyword: p.keyword,
-                                                    searchVolume: 0,
-                                                    competitionScore: 0,
-                                                    cpcValue: 0,
-                                                    intentType: 'Informational',
-                                                    trendDirection: 'neutral',
-                                                    updatedAt: p.created_at,
-                                                });
-                                            }}
-                                            className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-white transition-all border border-white/5"
-                                        >
-                                            View
-                                        </button>
-                                        <button
-                                            onClick={() => handleSendToNotion(p)}
-                                            disabled={isSendingToNotion === p.id}
-                                            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-primary transition-all border border-white/5 disabled:opacity-50"
-                                            title="Send directly to Notion"
-                                        >
-                                            {isSendingToNotion === p.id ? <Loader2 size={14} className="animate-spin" /> : <Share2 size={14} />}
-                                        </button>
-                                        <button
-                                            onClick={() => removeProject(p.id)}
-                                            className="p-2.5 rounded-xl bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 transition-all border border-rose-500/10"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    </div>
+                        contentProjects.length === 0 ? (
+                            <div className="h-[400px] flex flex-col items-center justify-center text-center opacity-50 px-6">
+                                <div className="size-20 bg-white/5 rounded-[32px] flex items-center justify-center mb-6">
+                                    <FileText size={32} className="text-slate-500" />
                                 </div>
-                            ))}
-                        </div>
+                                <h3 className="text-lg font-black text-white italic uppercase tracking-tighter">Workspace Vacuum Detected</h3>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2 max-w-[280px]">Run a broad scan and save high-value keywords to populate your intelligence hub.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                                {filteredProjects.map((p) => (
+                                    <div key={p.id} className="group bg-surface-dark border border-white/5 rounded-[32px] p-5 sm:p-6 hover:border-primary/30 transition-all hover:shadow-2xl hover:shadow-primary/5 flex flex-col h-full">
+                                        {/* ... card content ... */}
+                                        <div className="flex-1">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                                    <Clock size={10} /> {new Date(p.created_at).toLocaleDateString()}
+                                                </span>
+                                                <span className={cn(
+                                                    "text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border",
+                                                    p.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                        p.status === 'archived' ? 'bg-slate-500/10 text-slate-400 border-slate-500/20' :
+                                                            'bg-primary/10 text-primary border-primary/20'
+                                                )}>
+                                                    {p.status}
+                                                </span>
+                                            </div>
+                                            <h3 className="text-base font-black text-white group-hover:text-primary transition-colors line-clamp-2 mb-4 italic uppercase tracking-tighter leading-tight">{p.keyword}</h3>
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setEditingProject(p)}
+                                                className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-white transition-all border border-white/5"
+                                            >
+                                                Open Editor
+                                            </button>
+                                            <button
+                                                onClick={() => handleSendToNotion(p)}
+                                                disabled={isSendingToNotion === p.id}
+                                                className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-primary transition-all border border-white/5 disabled:opacity-50"
+                                                title="Send directly to Notion"
+                                            >
+                                                {isSendingToNotion === p.id ? <Loader2 size={14} className="animate-spin" /> : <Share2 size={14} />}
+                                            </button>
+                                            <button
+                                                onClick={() => removeProject(p.id)}
+                                                className="p-2.5 rounded-xl bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 transition-all border border-rose-500/10"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
                     )}
                 </div>
             )
             }
+            {editingProject && (
+                <AIEditor
+                    project={editingProject}
+                    onClose={() => {
+                        setEditingProject(null);
+                        fetchProjects(); // Refresh workspace on exit
+                    }}
+                />
+            )}
         </div >
     );
 }

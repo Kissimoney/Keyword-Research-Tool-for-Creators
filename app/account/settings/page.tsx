@@ -15,6 +15,7 @@ export default function GeneralSettings() {
     const [profile, setProfile] = useState<any>({
         full_name: '',
         avatar_url: '',
+        preferred_language: 'English',
     });
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -37,6 +38,7 @@ export default function GeneralSettings() {
                 setProfile({
                     full_name: data.full_name || '',
                     avatar_url: data.avatar_url || '',
+                    preferred_language: data.preferred_language || 'English',
                 });
             }
             setLoading(false);
@@ -56,6 +58,7 @@ export default function GeneralSettings() {
                     id: user.id,
                     full_name: profile.full_name,
                     avatar_url: profile.avatar_url,
+                    preferred_language: profile.preferred_language,
                     updated_at: new Date().toISOString(),
                 });
 
@@ -108,8 +111,8 @@ export default function GeneralSettings() {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                                 className={`p-4 rounded-2xl text-sm font-black border ${message.type === 'success'
-                                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                                        : 'bg-red-500/10 border-red-500/20 text-red-400'
+                                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                    : 'bg-red-500/10 border-red-500/20 text-red-400'
                                     }`}
                             >
                                 {message.text}
@@ -148,17 +151,21 @@ export default function GeneralSettings() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Email Address</label>
-                            <div className="relative">
-                                <Mail className="absolute left-6 top-1/2 -translate-y-1/2 size-5 text-slate-600" />
-                                <input
-                                    disabled
-                                    type="email"
-                                    value={user.email}
-                                    className="w-full bg-white/[0.02] border border-white/5 rounded-2xl pl-16 pr-6 py-4 text-slate-500 font-bold cursor-not-allowed italic"
-                                />
-                            </div>
-                            <p className="text-[10px] text-slate-600 font-bold ml-2 italic">To change your email, please contact priority support.</p>
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Preferred Language</label>
+                            <select
+                                value={profile.preferred_language}
+                                onChange={(e) => setProfile({ ...profile, preferred_language: e.target.value })}
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all appearance-none cursor-pointer"
+                            >
+                                <option value="English">English</option>
+                                <option value="German">German (Deutsch)</option>
+                                <option value="Spanish">Spanish (Español)</option>
+                                <option value="French">French (Français)</option>
+                                <option value="Portuguese">Portuguese</option>
+                                <option value="Italian">Italian</option>
+                                <option value="Japanese">Japanese</option>
+                                <option value="Chinese">Chinese</option>
+                            </select>
                         </div>
                     </div>
 
