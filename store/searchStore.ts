@@ -7,6 +7,7 @@ export interface KeywordResult {
     competitionScore: number;
     cpcValue: number;
     intentType: 'Informational' | 'Commercial' | 'Transactional' | 'Navigational' | 'Viral' | 'Entertainment';
+    intentLabel?: string;
     trendDirection: 'up' | 'down' | 'neutral';
     updatedAt?: string;
     strategy?: string;

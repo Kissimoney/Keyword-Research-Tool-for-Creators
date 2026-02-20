@@ -1119,7 +1119,7 @@ function KeywordRow({ data, isSaved, onSave, onClick, mode }: { data: KeywordRes
                                 data.intentType === 'Transactional' || data.intentType === 'Entertainment' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                                     'bg-amber-500/10 text-amber-400 border-amber-500/20'
                         )}>
-                            {data.intentType}
+                            {data.intentLabel || data.intentType}
                         </span>
                         <button
                             onClick={handleSave}
@@ -1202,7 +1202,7 @@ function KeywordRow({ data, isSaved, onSave, onClick, mode }: { data: KeywordRes
                             data.intentType === 'Transactional' || data.intentType === 'Entertainment' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                                 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                     )}>
-                        {data.intentType}
+                        {data.intentLabel || data.intentType}
                     </span>
                 </div>
 
