@@ -27,7 +27,10 @@ const SUGGESTED_KEYWORDS = [
 ];
 
 export default function Dashboard() {
-    const { query, setQuery, results, setResults, isLoading, setIsLoading, history, addToHistory, language, setLanguage } = useSearchStore();
+    const {
+        query, setQuery, results, setResults, isLoading, setIsLoading,
+        history, addToHistory, language, setLanguage, isLiveMode, setIsLiveMode
+    } = useSearchStore();
     const { credits, useCredits } = useCreditStore();
     const { persistCredits } = useSyncCredits();
     const { saveKeyword, savedKeywords, fetchKeywords: fetchSaved } = useProjectStore();
@@ -99,7 +102,7 @@ export default function Dashboard() {
             const resp = await fetch('/api/keywords', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ keyword: kw, mode: currentMode, language }),
+                body: JSON.stringify({ keyword: kw, mode: currentMode, language, isLiveMode }),
             });
             const data = await resp.json();
 
@@ -117,7 +120,7 @@ export default function Dashboard() {
         } finally {
             setIsLoading(false);
         }
-    }, [credits, setIsLoading, setResults, useCredits, persistCredits, mode, addToHistory, toastError]);
+    }, [credits, setIsLoading, setResults, useCredits, persistCredits, mode, addToHistory, toastError, language, isLiveMode]);
 
     const handleSearchSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -156,7 +159,7 @@ export default function Dashboard() {
                 const resp = await fetch('/api/keywords', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keyword: kw, mode, language }),
+                    body: JSON.stringify({ keyword: kw, mode, language, isLiveMode }),
                 });
                 const data = await resp.json();
 
@@ -310,7 +313,7 @@ export default function Dashboard() {
             const resp = await fetch('/api/keywords/session-recap', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, keywords }),
+                body: JSON.stringify({ title, keywords, isLiveMode }),
             });
             const data = await resp.json();
             if (resp.ok) {
@@ -394,6 +397,7 @@ export default function Dashboard() {
                         keyword={selectedKeyword}
                         onClose={() => setSelectedKeyword(null)}
                         language={language}
+                        isLiveMode={isLiveMode}
                     />
                 )}
             </AnimatePresence>
@@ -510,20 +514,34 @@ export default function Dashboard() {
                                 </div>
 
                                 <button
-                                    onClick={() => handleSearchSubmit()}
-                                    disabled={isLoading || isBatchProcessing || (!isBulkMode && !searchInput.trim()) || (isBulkMode && !bulkInput.trim())}
-                                    className="flex-1 py-3 sm:py-4 bg-primary text-white font-black rounded-xl sm:rounded-2xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
-                                >
-                                    {isLoading || isBatchProcessing ? (
-                                        <>
-                                            <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            {isBatchProcessing ? 'Batching...' : mode === 'competitor' ? 'Scanning...' : 'Analyzing...'}
-                                        </>
-                                    ) : (
-                                        mode === 'competitor' ? 'Deep Scan' : 'Analyze'
+                                    onClick={() => setIsLiveMode(!isLiveMode)}
+                                    className={cn(
+                                        "flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border shrink-0",
+                                        isLiveMode
+                                            ? "bg-primary text-white border-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] animate-pulse"
+                                            : "bg-surface-dark text-slate-500 border-white/5 hover:border-white/20"
                                     )}
+                                    title={isLiveMode ? "Live Google Search Enabled" : "Enable Live Search Grounding"}
+                                >
+                                    <Zap size={13} className={isLiveMode ? "fill-current" : ""} />
+                                    {isLiveMode ? "Live" : "Static"}
                                 </button>
                             </div>
+
+                            <button
+                                onClick={() => handleSearchSubmit()}
+                                disabled={isLoading || isBatchProcessing || (!isBulkMode && !searchInput.trim()) || (isBulkMode && !bulkInput.trim())}
+                                className="flex-1 py-3 sm:py-4 bg-primary text-white font-black rounded-xl sm:rounded-2xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                            >
+                                {isLoading || isBatchProcessing ? (
+                                    <>
+                                        <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        {isBatchProcessing ? 'Batching...' : mode === 'competitor' ? 'Scanning...' : 'Analyzing...'}
+                                    </>
+                                ) : (
+                                    mode === 'competitor' ? 'Deep Scan' : 'Analyze'
+                                )}
+                            </button>
 
                             {/* Progress Bar for Bulk Mode */}
                             <AnimatePresence>
@@ -556,7 +574,7 @@ export default function Dashboard() {
                         </>
                     )}
                 </div>
-            </motion.div>
+            </motion.div >
 
             {activeTab === 'research' ? (
                 <>
@@ -593,6 +611,7 @@ export default function Dashboard() {
                                 </div>
                             </motion.div>
                         )}
+
 
                         <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} className="hidden md:grid grid-cols-12 gap-4 px-8 py-4 border border-white/5 rounded-t-3xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
                             <div className="col-span-4 text-left">Keyword Insight</div>
@@ -1050,15 +1069,15 @@ export default function Dashboard() {
                         </div>
                     )}
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }
 
-function KeywordRow({ data, isSaved, onSave, onClick, mode }: { data: KeywordResult, isSaved: boolean, onSave: () => void, onClick: () => void, mode: string }) {
+function KeywordRow({ data, isSaved, onSave, onClick, mode }: { data: KeywordResult; isSaved: boolean; onSave: () => void; onClick: () => void; mode: string }) {
     const [saving, setSaving] = useState(false);
     const difficultyColor = data.competitionScore > 70 ? 'text-red-500' : data.competitionScore > 30 ? 'text-orange-500' : 'text-primary';
-    const difficultyBg = data.competitionScore > 70 ? 'bg-red-500' : data.competitionScore > 30 ? 'bg-orange-500' : 'bg-primary';
 
     const handleSave = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -1068,7 +1087,6 @@ function KeywordRow({ data, isSaved, onSave, onClick, mode }: { data: KeywordRes
         setSaving(false);
     };
 
-    // Deterministic sparkline path seeded from the keyword string
     const sparklinePath = useMemo(() => {
         let seed = data.keyword.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
         const rand = () => { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return (seed >>> 0) / 0xffffffff; };
@@ -1086,7 +1104,6 @@ function KeywordRow({ data, isSaved, onSave, onClick, mode }: { data: KeywordRes
             onClick={onClick}
             className="group border-b border-white/5 cursor-pointer last:border-b-0 transition-all"
         >
-            {/* Mobile card layout */}
             <div className="md:hidden p-4 flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -1129,7 +1146,6 @@ function KeywordRow({ data, isSaved, onSave, onClick, mode }: { data: KeywordRes
                 </div>
             </div>
 
-            {/* Desktop table row layout */}
             <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-6 items-center">
                 <div className="col-span-4 flex flex-col">
                     <div className="flex items-center gap-3">

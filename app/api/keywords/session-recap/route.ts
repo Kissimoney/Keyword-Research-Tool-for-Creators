@@ -20,11 +20,13 @@ export async function POST(request: Request) {
 
     let keywords: string[] = [];
     let title: string = 'Recent Activity';
+    let isLiveMode: boolean = false;
 
     try {
         const body = await request.json();
         keywords = body.keywords || [];
         title = body.title || 'Recent Activity';
+        isLiveMode = body.isLiveMode || false;
 
         if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
             return NextResponse.json({ error: 'No keywords provided for recap' }, { status: 400, headers: HEADERS });
@@ -32,6 +34,7 @@ export async function POST(request: Request) {
 
         const prompt = `
 Act as a Senior Market Intelligence Analyst.
+${isLiveMode ? 'USE REAL-TIME GOOGLE SEARCH to validate current market saturation, search trends, and recent news related to these topics.' : ''}
 I have a list of keyword research queries from a session titled "${title}".
 Your goal is to synthesize these searches into a high-level strategic recap.
 
@@ -47,7 +50,10 @@ Provide a concise, executive summary (approx 150-200 words) that includes:
 Format the output in clean, structured Markdown. Use professional headers.
 `.trim();
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-1.5-flash',
+            tools: isLiveMode ? [{ googleSearchRetrieval: {} }] as any : undefined,
+        });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
 

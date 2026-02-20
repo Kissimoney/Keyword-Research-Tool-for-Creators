@@ -11,14 +11,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
     }
 
-    let body: { keyword?: string; language?: string };
+    let body: { keyword?: string; language?: string; isLiveMode?: boolean };
     try {
         body = await request.json();
     } catch {
         return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const { keyword, language = 'English' } = body;
+    const { keyword, language = 'English', isLiveMode = false } = body;
     if (!keyword?.trim()) {
         return NextResponse.json({ error: 'Keyword is required' }, { status: 400 });
     }
@@ -29,6 +29,7 @@ export async function POST(request: Request) {
 
     const prompt = `
 Act as a senior SEO content strategist.
+${isLiveMode ? 'USE REAL-TIME GOOGLE SEARCH to gather the latest information, current statistics, and top-ranking competitor structures for this topic.' : ''}
 Generate a comprehensive SEO content brief for the keyword: "${keyword}" in the ${language} language.
 
 Include these sections (use ## for each, but translate headers to ${language}):
@@ -43,7 +44,10 @@ Format in clean Markdown with bold labels and bullet points. IMPORTANT: All cont
 `.trim();
 
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-1.5-flash',
+            tools: isLiveMode ? [{ googleSearchRetrieval: {} }] as any : undefined,
+        });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
         return NextResponse.json({ brief: text }, { headers: HEADERS });

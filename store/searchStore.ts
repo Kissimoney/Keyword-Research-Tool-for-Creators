@@ -31,12 +31,14 @@ interface SearchState {
         difficulty: string;
         intent: string;
     };
-    language: string; // Added language state
+    language: string;
+    isLiveMode: boolean; // Added for real-time search grounding
     setQuery: (query: string) => void;
     setResults: (results: KeywordResult[]) => void;
     setIsLoading: (isLoading: boolean) => void;
     setFilter: (key: string, value: string) => void;
-    setLanguage: (language: string) => void; // Added setLanguage setter
+    setLanguage: (language: string) => void;
+    setIsLiveMode: (isLiveMode: boolean) => void; // Added live mode setter
     addToHistory: (entry: SearchHistoryEntry) => void;
     clearHistory: () => void;
 }
@@ -54,8 +56,10 @@ export const useSearchStore = create<SearchState>()(
                 intent: 'All',
             },
             language: 'English',
+            isLiveMode: false,
             setQuery: (query) => set({ query }),
             setLanguage: (language: string) => set({ language }),
+            setIsLiveMode: (isLiveMode: boolean) => set({ isLiveMode }),
             setResults: (results) => set({ results }),
             setIsLoading: (isLoading) => set({ isLoading }),
             setFilter: (key, value) =>
@@ -74,11 +78,12 @@ export const useSearchStore = create<SearchState>()(
         }),
         {
             name: 'creatorkeyword-search',
-            // Only persist history and last query — not results (too large)
+            // Only persist history, last query, and settings
             partialize: (state) => ({
                 query: state.query,
                 history: state.history,
                 language: state.language,
+                isLiveMode: state.isLiveMode,
             }),
         }
     )

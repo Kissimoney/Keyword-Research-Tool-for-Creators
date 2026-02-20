@@ -112,14 +112,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
     }
 
-    let body: { keyword?: string; mode?: string; language?: string };
+    let body: { keyword?: string; mode?: string; language?: string; isLiveMode?: boolean };
     try {
         body = await request.json();
     } catch {
         return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const { keyword, mode = 'web', language = 'English' } = body;
+    const { keyword, mode = 'web', language = 'English', isLiveMode = false } = body;
 
     if (!keyword?.trim()) {
         return NextResponse.json({ error: 'Keyword or domain is required' }, { status: 400 });
@@ -138,7 +138,10 @@ export async function POST(request: Request) {
     try {
         console.log(`[keywords] mode=${mode} language=${language} keyword="${keyword}"`);
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-1.5-flash',
+            tools: isLiveMode ? [{ googleSearchRetrieval: {} }] as any : undefined,
+        });
 
         // Competitor mode: try to fetch site metadata first
         let contextInfo = '';
@@ -176,6 +179,7 @@ keyword, searchVolume (integer), competitionScore (0-100 integer), cpcValue (flo
 `
                     : `
 Act as a senior Web SEO specialist and data analyst.
+${isLiveMode ? 'USE REAL-TIME GOOGLE SEARCH to identify current trends, skyrocketing topics, and up-to-the-minute search data.' : ''}
 Generate exactly 20 high-value keywords for: "${keyword}" in the ${language} language.
 
 Return ONLY a valid JSON array (no markdown, no prose) of 20 objects with these exact keys:

@@ -62,7 +62,7 @@ function parseSections(markdown: string): Section[] {
     });
 }
 
-export default function BriefModal({ keyword, onClose, language = 'English' }: { keyword: KeywordResult; onClose: () => void; language?: string }) {
+export default function BriefModal({ keyword, onClose, language = 'English', isLiveMode = false }: { keyword: KeywordResult; onClose: () => void; language?: string; isLiveMode?: boolean }) {
     const [brief, setBrief] = useState<string | null>(null);
     const [fullPlan, setFullPlan] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -81,7 +81,7 @@ export default function BriefModal({ keyword, onClose, language = 'English' }: {
                 const resp = await fetch('/api/keywords/brief', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keyword: keyword.keyword, language }),
+                    body: JSON.stringify({ keyword: keyword.keyword, language, isLiveMode }),
                 });
                 const data = await resp.json();
                 setBrief(data.brief);
@@ -92,7 +92,7 @@ export default function BriefModal({ keyword, onClose, language = 'English' }: {
             }
         };
         fetchBrief();
-    }, [keyword]);
+    }, [keyword, language, isLiveMode]);
 
     const handleBuildStrategy = async () => {
         setIsBuilding(true);
